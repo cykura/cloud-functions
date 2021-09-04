@@ -1,8 +1,7 @@
-import { MARKETS } from './price-indexer.js';
-const { ApolloServer, gql } = require('apollo-server');
+import { MARKETS } from '@project-serum/serum';
+import { ApolloServer } from 'apollo-server';
 require('dotenv').config()
 
-console.log(MARKETS);
 
 // type defs
 const typeDefs = `gql
@@ -17,14 +16,14 @@ const typeDefs = `gql
 
 // resolvers
 const resolvers = {
-    Query: {
+  Query: {
     Markets: () => MARKETS,
   },
 };
 
 const server = new ApolloServer({ typeDefs, resolvers });
 
-url = 'http://hasuragraphqlapi-loadbalancer-336945920.ap-southeast-1.elb.amazonaws.com/v1/graphql'
+// const url = 'http://hasuragraphqlapi-loadbalancer-336945920.ap-southeast-1.elb.amazonaws.com/v1/graphql'
 server.listen().then(({ url }) => {
   console.log(`Server ready at ${url}`);
 });
