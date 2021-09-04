@@ -1,1 +1,9 @@
-# serum-price-indexer
+## serum price indexer
+
+### Setup
+```
+npm install
+```
+```
+npm start
+```

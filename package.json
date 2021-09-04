@@ -1,0 +1,28 @@
+{
+  "name": "serum-price-indexer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "dev": "nodemon --exec ts-node src/index.ts",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Cyclos Finance",
+  "license": "ISC",
+  "devDependencies": {
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.2",
+    "nodemon": "^2.0.12",
+    "dotenv": "^10.0.0"
+  },
+  "dependencies": {
+    "@project-serum/serum": "^0.13.58",
+    "@solana/web3.js": "^1.24.1",
+    "apollo-server-express": "^3.3.0",
+    "express": "^4.17.1",
+    "graphql": "^15.5.2"
+  }
+}
