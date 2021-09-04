@@ -1,4 +1,4 @@
-## serum price indexer
+## Serum Price Indexer
 
 ### Setup
 ```
