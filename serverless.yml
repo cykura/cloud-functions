@@ -1,7 +1,7 @@
 org: smrnjeet222
 app: pricetracker
 service: pricetracker-cron
-
+useDotenv: true
 
 provider:
   name: aws
@@ -9,8 +9,11 @@ provider:
   region: 'us-east-1'
   timeout: 900
   lambdaHashingVersion: 20201221
+  environment:
+    HASURA_SECRET: ${file(./secrets.json):HASURA_SECRET}
+    GRAPHQL_ENDPOINT: ${file(./secrets.json):GRAPHQL_ENDPOINT}
 functions:
   track:
     handler: handler.track
     events:
-      - schedule: rate(2 minutes)
+      - schedule: rate(1 minute)

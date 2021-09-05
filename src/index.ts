@@ -24,28 +24,26 @@ async function getLatestPrice(marketAddress: PublicKey): Promise<number> {
   }
 }
 
-  const run = async () => {
-    MARKETS.filter(
-      (m: typeof MARKETS[0]) => !m.deprecated && m.name.split("/")[1] === "USDC"
-    ).map(async (m: typeof MARKETS[0]) => {
+(async () => {
+  const time = new Date().toISOString();
+  MARKETS
+    .filter(m => !m.deprecated && m.name.split("/")[1] === "USDC")
+    .map(async (m) => {
       try {
         const price = await getLatestPrice(m.address);
         console.log(`${m.name}: ${price}`);
+        // Inserting prices
+        await apolloClient.mutate({
+          mutation: INSERT_PRICES,
+          variables: {
+            price: `${price}`,
+            time,
+            Market_ID: `${m.name}`,
+          },
+        });
       } catch (error) {
         console.error(`\nFAILED ${m.name} => ${error}\n`);
       }
-
-      // Inserting prices
-      await apolloClient.mutate({
-        mutation: INSERT_PRICES,
-        variables: {
-          // Price Undefined
-          price: `${price}`,
-          time: Date.now(),
-          Market_ID: `${m.name}`,
-        },
-      });
     });
-    return "success";
-  };
-  run();
+  return "success";
+})();

@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache, createHttpLink, gql} from "@apollo/client";
+import { ApolloClient, InMemoryCache, createHttpLink, gql } from "@apollo/client";
 import { fetch } from 'cross-fetch'
 require("dotenv").config();
 
@@ -15,7 +15,7 @@ const apolloClient = new ApolloClient({
 
 // Structure of GQL API
 const INSERT_PRICES = gql`
-  mutation InsertPrices($price: Int!, $time: timestamptz!, $Market_ID: bpchar!) {
+  mutation InsertPrices($price: float8!, $time: timestamptz!, $Market_ID: String!) {
     insert_prices_one(
       object: { price: $price, time: $time, Market_ID: $Market_ID }
     ) {
