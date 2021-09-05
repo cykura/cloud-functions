@@ -1,9 +1,11 @@
-## Serum Price Indexer
+# Serum Price Indexer
 
-### Setup
+## Setup
+Install dependancies
 ```
 npm install
 ```
+Run script
 ```
 npm start
 ```
