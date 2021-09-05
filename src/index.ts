@@ -31,16 +31,16 @@ async function getLatestPrice(marketAddress: PublicKey): Promise<number> {
     .map(async (m) => {
       try {
         const price = await getLatestPrice(m.address);
-        console.log(`${m.name}: ${price}`);
         // Inserting prices
-        await apolloClient.mutate({
+        const resp = await apolloClient.mutate({
           mutation: INSERT_PRICES,
           variables: {
             price: `${price}`,
-            time,
+            time: time,
             Market_ID: `${m.name}`,
           },
         });
+      console.log(`ADDED: ${resp?.data?.insert_prices_one?.Market_ID} @ ${resp?.data?.insert_prices_one?.price}`);
       } catch (error) {
         console.error(`\nFAILED ${m.name} => ${error}\n`);
       }

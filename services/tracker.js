@@ -33,12 +33,6 @@ exports.func = async () => {
     }
   `;
 
-  console.log("Starting...");
-
-
-  console.log(process.env.GRAPHQL_ENDPOINT);
-
-
   async function getLatestPrice(marketAddress) {
     let market = await Market.load(CONNECTION, marketAddress, {}, PROGRAMADDRESS);
 
@@ -56,27 +50,28 @@ exports.func = async () => {
     }
   }
 
-
   const time = new Date().toISOString();
 
-  MARKETS
-    .filter(m => !m.deprecated && m.name.split("/")[1] === 'USDC')
-    .map(async m => {
-      try {
-        const price = await getLatestPrice(m.address);
-        // Inserting prices
-        await apolloClient.mutate({
-          mutation: INSERT_PRICES,
-          variables: {
-            price: `${price}`,
-            time: time,
-            Market_ID: `${m.name}`,
-          },
-        });
-      } catch (error) {
-        console.error(`\nFAILED ${m.name} => ${error}\n`);
-        throw error;
-      }
-    })
+  const filteredMarkets = MARKETS.filter(m => !m.deprecated && m.name.split("/")[1] === 'USDC')
+  
+  await Promise.all(filteredMarkets.map(async (m) => {
+    try {
+      const price = await getLatestPrice(m.address);
+      const resp = await apolloClient.mutate({
+        mutation: INSERT_PRICES,
+        variables: {
+          price: `${price}`,
+          time: time,
+          Market_ID: `${m.name}`,
+        },
+      });
+      console.log(`ADDED: ${resp?.data?.insert_prices_one?.Market_ID} @ ${resp?.data?.insert_prices_one?.price}`);
+    } catch (error) {
+      console.error(`\nFAILED ${m.name} => ${error}\n`);
+      throw error;
+    }
+  }));
+
+  console.log("Program Ended");
   return "success";
 }

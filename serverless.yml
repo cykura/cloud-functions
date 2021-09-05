@@ -1,6 +1,6 @@
 org: smrnjeet222
-app: pricetracker
-service: pricetracker-cron
+app: price-indexer
+service: indexer
 useDotenv: true
 
 provider:
@@ -16,4 +16,4 @@ functions:
   track:
     handler: handler.track
     events:
-      - schedule: rate(1 minute)
+      - schedule: rate(15 minutes)

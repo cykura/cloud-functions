@@ -6,7 +6,7 @@
   "scripts": {
     "start": "ts-node src/index.ts",
     "dev": "nodemon",
-    "build": "tsc",
+    "severless:local": "serverless invoke local --function track",
     "deploy": "serverless deploy"
   },
   "keywords": [],
