@@ -1,8 +1,7 @@
-import { Connection, PublicKey } from '@solana/web3.js';
+import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js';
 import { Market, MARKETS, Orderbook } from '@project-serum/serum';
-import { apolloClient, INSERT_PRICES } from "./graphql";
 
-const CONNECTION: Connection = new Connection('https://solana-api.projectserum.com');
+const CONNECTION: Connection = new Connection(clusterApiUrl('mainnet-beta'));
 // Serum DEX program ID
 const PROGRAMADDRESS: PublicKey = new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin");
 
@@ -32,15 +31,8 @@ async function getLatestPrice(marketAddress: PublicKey): Promise<number> {
       try {
         const price = await getLatestPrice(m.address);
         // Inserting prices
-        const resp = await apolloClient.mutate({
-          mutation: INSERT_PRICES,
-          variables: {
-            price: `${price}`,
-            time: time,
-            Market_ID: `${m.name}`,
-          },
-        });
-      console.log(`ADDED: ${resp?.data?.insert_prices_one?.Market_ID} @ ${resp?.data?.insert_prices_one?.price}`);
+
+        console.log(`ADDED: ${m.name} @ ${price}`);
       } catch (error) {
         console.error(`\nFAILED ${m.name} => ${error}\n`);
       }

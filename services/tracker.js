@@ -1,11 +1,11 @@
-const { Connection, PublicKey } = require("@solana/web3.js")
+const { Connection, PublicKey, clusterApiUrl } = require("@solana/web3.js")
 const { Market, MARKETS } = require("@project-serum/serum")
 const { ApolloClient, InMemoryCache, createHttpLink, gql } = require("@apollo/client");
 const { fetch } = require('cross-fetch');
 require("dotenv").config();
 
 exports.func = async () => {
-  const CONNECTION = new Connection('https://solana-api.projectserum.com');
+  const CONNECTION = new Connection(clusterApiUrl('mainnet-beta'));
   // Serum DEX program ID
   const PROGRAMADDRESS = new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin");
 
