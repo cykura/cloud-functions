@@ -10,7 +10,7 @@ import { Market, MARKETS, Orderbook } from "@project-serum/serum";
 
 exports.addPrices = functions
   .pubsub
-  .schedule("*/1 * * * *").onRun(async () => {
+  .schedule("*/15 * * * *").onRun(async () => {
     const CONNECTION: Connection = new Connection(clusterApiUrl('mainnet-beta'));
     // Serum DEX program ID
     const PROGRAMADDRESS: PublicKey =
@@ -42,17 +42,30 @@ exports.addPrices = functions
     const time = admin.firestore.Timestamp.now();
 
     const filteredMarkets = MARKETS.filter((m) =>
-      !m.deprecated && m.name.split("/")[1] === "USDC"
-    ).splice(0, 5);
+      !m.deprecated && (
+        m.name === "SOL/USDC" ||
+        m.name === "BTC/USDC" ||
+        m.name === "ETH/USDC" ||
+        m.name === "SRM/USDC" ||
+        m.name === "USDT/USDC" ||
+        m.name === "SBR/USDC" ||
+        m.name === "FTT/USDC" ||
+        m.name === "MNGO/USDC" 
+      )
+    );
 
     await Promise.all(filteredMarkets.map(async (m) => {
       try {
         const price = await getLatestPrice(m.address);
+        db.collection("serum-price-indexer").doc(m.name.split("/")[0]).set({
+          address: m.address.toString(),
+          prices: admin.firestore.FieldValue.arrayUnion({ price, time }),
+        }, { merge: true })
         console.log(`ADDED: ${m.name} @ ${price},  ${time.toDate()}`);
       } catch (error) {
         console.error(`\nFAILED ${m.name} => ${error}\n`);
         throw error;
       }
     }));
-    return "success";
+    return;
   });
