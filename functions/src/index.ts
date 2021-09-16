@@ -11,7 +11,7 @@ import { Market, MARKETS, Orderbook } from "@project-serum/serum";
 exports.addPrices = functions
   .pubsub
   .schedule("*/15 * * * *").onRun(async () => {
-    const CONNECTION: Connection = new Connection(clusterApiUrl('mainnet-beta'));
+    const CONNECTION: Connection = new Connection("https://dawn-red-log.solana-mainnet.quiknode.pro/ff88020a7deb8e7d855ad7c5125f489ef1e9db71/");
     // Serum DEX program ID
     const PROGRAMADDRESS: PublicKey =
       new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin");
@@ -43,14 +43,7 @@ exports.addPrices = functions
 
     const filteredMarkets = MARKETS.filter((m) =>
       !m.deprecated && (
-        m.name === "SOL/USDC" ||
-        m.name === "BTC/USDC" ||
-        m.name === "ETH/USDC" ||
-        m.name === "SRM/USDC" ||
-        m.name === "USDT/USDC" ||
-        m.name === "SBR/USDC" ||
-        m.name === "FTT/USDC" ||
-        m.name === "MNGO/USDC" 
+        m.name.split("/")[1] === "USDC"
       )
     );
 
