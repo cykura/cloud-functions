@@ -1,1 +1,0 @@
-exports.track = require("./services/tracker").func;
