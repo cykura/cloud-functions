@@ -42,8 +42,7 @@ getMarkets().then(console.log);
       try {
         const price = await getLatestPrice(new PublicKey(m.extensions?.serumV3Usdc));
         // Inserting prices
-
-        // console.log(`ADDED: ${m.name} @ ${price}`);
+        console.log(`ADDED: ${m.name} @ ${price}`);
       } catch (error) {
         console.error(`\nFAILED ${m.name} => ${error}\n`);
       }
