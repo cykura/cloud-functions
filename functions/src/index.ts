@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Metadata } from "./types";
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 admin.initializeApp()
@@ -82,16 +83,52 @@ exports.getAllNFT = functions
       return;
     }
     cors(req, res, async () => {
-      const nfts = [];
+      const nfts: { id: String, data: Metadata }[] = [];
       await admin.firestore().collection('nft-example').get().then(querySnapshot => {
         querySnapshot.forEach((doc) => {
           // doc.data() is never undefined for query doc snapshots
           const id = doc.id;
-          const data = JSON.parse(doc.data().data);
+          const data: Metadata = JSON.parse(doc.data().data);
           nfts.push({ id, data });
         });
       });
       functions.logger.log('Sending:', nfts);
       res.status(200).send(nfts);
+    })
+  });
+
+exports.getNFT = functions
+  .region('asia-south1')
+  .https.onRequest((req, res) => {
+    if (req.method !== 'GET') {
+      res.status(403).send('Forbidden!');
+      return;
+    }
+    cors(req, res, async () => {
+      console.log(req.query.mint);
+      
+      res.status(200).send({
+        "id": "1",
+        "name": "Cyclos Golden Ticket",
+        "image": "https://cdn.jsdelivr.net/gh/cyclos-io/assets/Liquidity_Ticket_Gif.gif",
+        "external_url": "https://www.cyclos.io/",
+        "description": "Access ticket for the Cyclos private launch",
+        "attributes": [
+          {
+            "trait_type": "Tier",
+            "value": "Legendary"
+          }
+        ],
+        "properties": {
+          "files": [
+            {
+              "uri": "https://cdn.jsdelivr.net/gh/cyclos-io/assets/Liquidity_Ticket_Gif.gif",
+              "type": "image/gif"
+            }
+          ],
+          "category": "image",
+        },
+        "background_color": "FFFFFF"
+      });
     })
   });

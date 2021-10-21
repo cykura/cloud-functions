@@ -34,7 +34,6 @@ async function getMarkets() {
 getMarkets().then(console.log);
 
 (async () => {
-  const time = new Date().toISOString();
   const MARKETS = await getMarkets();
   console.log(MARKETS.length);
   MARKETS
