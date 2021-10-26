@@ -19,9 +19,10 @@ Parameters:
   DBName:
     Description: "The name of the PostgreSQL database"
     Type: String
-  ECRImage:
-    Description: "The URI of the ECR Image you are trying to run. In this case its the Hasura image"
+  DockerImage:
+    Description: 'Name and tag of the Hasura Docker Image'
     Type: String
+    Default: 'hasura/graphql-engine'
   HasuraAccessKey:
     Description: "The console should have an access key for basic security."
     Type: String
@@ -467,7 +468,7 @@ Resources:
       TaskRoleArn: !Ref NewTaskRole
       ContainerDefinitions:
         - Name: !Ref APIName
-          Image: !Ref ECRImage
+          Image: !Ref DockerImage
           PortMappings:
             - ContainerPort: !Ref ContainerPort
           # Send logs to CloudWatch Logs
@@ -495,7 +496,7 @@ Resources:
             - Name: "HASURA_GRAPHQL_UNAUTHORIZED_ROLE"
               Value: "user"
             - Name: "HASURA_GRAPHQL_CORS_DOMAIN"
-              Value: "https://*.cyclos.io, http://*.cyclos.io, http://localhost:3000, http://localhost:*"
+              Value: "*"
             - Name: "HASURA_GRAPHQL_ACCESS_KEY"
               Value: !Ref "HasuraAccessKey"
             - Name: "HASURA_GRAPHQL_PG_TIMEOUT"
