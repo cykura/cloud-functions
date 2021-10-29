@@ -18,6 +18,22 @@ const CONNECTION: Connection = new Connection("https://dawn-red-log.solana-mainn
 const PROGRAMADDRESS: PublicKey =
   new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin");
 
+const NFT_MetaData = {
+  name: "Cyclos Position",
+  image: "https://cdn.jsdelivr.net/gh/cyclos-io/assets/Liquidity_Ticket_Gif.gif",
+  external_url: "https://www.cyclos.io/",
+  description: "NFT ticket representing your Liquidity Position",
+  properties: {
+    files: [
+      {
+        uri: "https://cdn.jsdelivr.net/gh/cyclos-io/assets/Liquidity_Ticket_Gif.gif",
+        type: "image/gif"
+      }
+    ],
+    category: "image",
+  }
+}
+
 exports.addSerumPrices = functions
   .region('asia-south1')
   .pubsub
@@ -87,29 +103,7 @@ exports.getNFT = functions
     }
     cors(req, res, async () => {
       if (!req.query.mint) {
-        res.status(200).send({
-          "id": "1",
-          "name": "Cyclos Golden Ticket",
-          "image": "https://cdn.jsdelivr.net/gh/cyclos-io/assets/Liquidity_Ticket_Gif.gif",
-          "external_url": "https://www.cyclos.io/",
-          "description": "Access ticket for the Cyclos private launch",
-          "attributes": [
-            {
-              "trait_type": "Tier",
-              "value": "Legendary"
-            }
-          ],
-          "properties": {
-            "files": [
-              {
-                "uri": "https://cdn.jsdelivr.net/gh/cyclos-io/assets/Liquidity_Ticket_Gif.gif",
-                "type": "image/gif"
-              }
-            ],
-            "category": "image",
-          },
-          "background_color": "FFFFFF"
-        });
+        res.status(200).send(NFT_MetaData);
       } else {
         const query = {
           query: `query getPositionQuery($mint: String!) {
@@ -159,15 +153,30 @@ exports.getNFT = functions
           );
 
           const data = {
-            market: nft.market,
-            mint: nft.mint,
-            coin, pc, minPrice, maxPrice,
-            liquidity_contributions: nft.liquidity_contributions
+            ...NFT_MetaData,
+            attributes: [
+              {
+                trait_type: "Coin",
+                value: coin
+              },
+              {
+                trait_type: "Pc",
+                value: pc
+              },
+              {
+                trait_type: "Range",
+                value: `[${minPrice}, ${maxPrice})`
+              },
+              {
+                trait_type: "Is Active",
+                value: `${nft.liquidity_contributions?.length ? "True" : "False"}`
+              },
+            ]
           }
           res.status(200).send(data);
         } catch (e) {
           console.log(e);
-          res.status(404).send(e);
+          res.status(200).send(NFT_MetaData);
         }
       }
     })
