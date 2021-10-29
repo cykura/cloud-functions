@@ -75,27 +75,6 @@ exports.addSerumPrices = functions
     return;
   });
 
-exports.getAllNFT = functions
-  .region('asia-south1')
-  .https.onRequest((req, res) => {
-    if (req.method !== 'GET') {
-      res.status(403).send('Forbidden!');
-      return;
-    }
-    cors(req, res, async () => {
-      const nfts: { id: String, data: Metadata }[] = [];
-      await admin.firestore().collection('nft-example').get().then(querySnapshot => {
-        querySnapshot.forEach((doc) => {
-          // doc.data() is never undefined for query doc snapshots
-          const id = doc.id;
-          const data: Metadata = JSON.parse(doc.data().data);
-          nfts.push({ id, data });
-        });
-      });
-      functions.logger.log('Sending:', nfts);
-      res.status(200).send(nfts);
-    })
-  });
 
 exports.getNFT = functions
   .region('asia-south1')
@@ -105,30 +84,57 @@ exports.getNFT = functions
       return;
     }
     cors(req, res, async () => {
-      console.log(req.query.mint);
-      
-      res.status(200).send({
-        "id": "1",
-        "name": "Cyclos Golden Ticket",
-        "image": "https://cdn.jsdelivr.net/gh/cyclos-io/assets/Liquidity_Ticket_Gif.gif",
-        "external_url": "https://www.cyclos.io/",
-        "description": "Access ticket for the Cyclos private launch",
-        "attributes": [
-          {
-            "trait_type": "Tier",
-            "value": "Legendary"
-          }
-        ],
-        "properties": {
-          "files": [
+      if (!req.query.mint) {
+        res.status(200).send({
+          "id": "1",
+          "name": "Cyclos Golden Ticket",
+          "image": "https://cdn.jsdelivr.net/gh/cyclos-io/assets/Liquidity_Ticket_Gif.gif",
+          "external_url": "https://www.cyclos.io/",
+          "description": "Access ticket for the Cyclos private launch",
+          "attributes": [
             {
-              "uri": "https://cdn.jsdelivr.net/gh/cyclos-io/assets/Liquidity_Ticket_Gif.gif",
-              "type": "image/gif"
+              "trait_type": "Tier",
+              "value": "Legendary"
             }
           ],
-          "category": "image",
-        },
-        "background_color": "FFFFFF"
-      });
+          "properties": {
+            "files": [
+              {
+                "uri": "https://cdn.jsdelivr.net/gh/cyclos-io/assets/Liquidity_Ticket_Gif.gif",
+                "type": "image/gif"
+              }
+            ],
+            "category": "image",
+          },
+          "background_color": "FFFFFF"
+        });
+      } else {
+        const query = {
+          query: `query getPositionQuery($mint: String!) {
+          positions_by_pk(mint: $mint) {
+            coin_lots
+            market
+            mint
+            pc_lots
+            price_lot_range_div_100
+          }
+        }`,
+          variables: {
+            mint: req.query.mint
+          }
+        };
+        try {
+          const nftResponse = await axios.post("https://cyclos.me/v1/graphql", query, {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          const nft = nftResponse.data.data.positions_by_pk;
+          res.status(200).send(nft);
+        } catch (e) {
+          console.log(e);
+          res.status(404).send(e);
+        }
+      }
     })
   });

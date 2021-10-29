@@ -1,3 +1,4 @@
+import axios from "axios";
 import express from 'express';
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
@@ -35,6 +36,38 @@ app.get('/', async (req, res) => {
   console.log(nfts);
 
   return res.json(nfts);
+});
+
+app.get('/nft', async (req, res) => {
+  console.log(req.query.mint);
+
+  if (!req.query.mint) {
+    return res.json({ data: null, error: "No mint query found" });
+  }
+
+  const query = {
+    query: `query getPositionQuery($mint: String!) {
+      positions_by_pk(mint: $mint) {
+        coin_lots
+        market
+        mint
+        pc_lots
+        price_lot_range_div_100
+      }
+    }`,
+    variables: {
+      mint: req.query.mint
+    }
+  };
+
+  const nftResponse = await axios.post("https://cyclos.me/v1/graphql", query, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+  const nft = nftResponse.data.data.positions_by_pk;
+  
+  return res.json({ data: nft, error: null });
 });
 
 

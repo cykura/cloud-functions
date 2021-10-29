@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/nft.ts",
   "scripts": {
-    "dev": "nodemon src/nft.ts"
+    "dev:nft": "nodemon src/nft.ts"
   },
   "keywords": [],
   "author": "Cyclos Finance",
