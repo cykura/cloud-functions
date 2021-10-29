@@ -119,6 +119,11 @@ exports.getNFT = functions
             mint
             pc_lots
             price_lot_range_div_100
+            liquidity_contributions {
+              is_bid
+              lot_size_in_coin
+              price_lot_div_100
+            }
           }
         }`,
           variables: {
@@ -156,7 +161,8 @@ exports.getNFT = functions
           const data = {
             market: nft.market,
             mint: nft.mint,
-            coin, pc, minPrice, maxPrice
+            coin, pc, minPrice, maxPrice,
+            liquidity_contributions: nft.liquidity_contributions
           }
           res.status(200).send(data);
         } catch (e) {
