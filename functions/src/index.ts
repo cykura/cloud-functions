@@ -156,11 +156,11 @@ exports.getNFT = functions
             ...NFT_MetaData,
             attributes: [
               {
-                trait_type: "Coin",
+                trait_type: "CYS",
                 value: coin
               },
               {
-                trait_type: "Pc",
+                trait_type: "USDC",
                 value: pc
               },
               {
@@ -168,8 +168,8 @@ exports.getNFT = functions
                 value: `[${minPrice}, ${maxPrice})`
               },
               {
-                trait_type: "Is Active",
-                value: `${nft.liquidity_contributions?.length ? "True" : "False"}`
+                trait_type: "In Range",
+                value: `${nft.liquidity_contributions?.length ? "Yes" : "No"}`
               },
             ]
           }
