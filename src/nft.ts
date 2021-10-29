@@ -3,6 +3,9 @@ import express from 'express';
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
 import { Metadata } from "./types";
+import { BN } from "@project-serum/anchor";
+import { Market } from "@project-serum/serum";
+import { Connection, PublicKey } from "@solana/web3.js";
 
 
 const firebaseConfig = {
@@ -66,8 +69,35 @@ app.get('/nft', async (req, res) => {
     }
   });
   const nft = nftResponse.data.data.positions_by_pk;
-  
-  return res.json({ data: nft, error: null });
+  const CONNECTION: Connection = new Connection("https://dawn-red-log.solana-mainnet.quiknode.pro/ff88020a7deb8e7d855ad7c5125f489ef1e9db71/");
+
+  const marketClient = await Market.load(
+    CONNECTION,
+    new PublicKey(nft?.market),
+    {},
+    new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
+  );
+
+  // for coin
+  const coin = marketClient.baseSizeLotsToNumber(new BN(nft.coin_lots))
+  // for pc
+  const pc = marketClient.quoteSizeLotsToNumber(new BN(nft.pc_lots))
+
+  const range = nft.price_lot_range_div_100.split(",");
+  const minPrice = marketClient?.priceLotsToNumber(
+    new BN(+range[0]?.slice(1) * 100 ?? 0)
+  );
+  const maxPrice = marketClient?.priceLotsToNumber(
+    new BN(+range[1]?.slice(0, -1) * 100 ?? 0)
+  );
+
+  const data = {
+    market: nft.market,
+    mint: nft.mint,
+    coin, pc, minPrice, maxPrice
+  }
+
+  return res.json(data);
 });
 
 

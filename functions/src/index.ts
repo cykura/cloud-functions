@@ -7,19 +7,21 @@ const db = admin.firestore();
 
 import { Connection, PublicKey } from "@solana/web3.js";
 import { Market, Orderbook } from "@project-serum/serum";
+import { BN } from "@project-serum/anchor";
 
 const cors = require('cors')({
   origin: true,
 });
 
+const CONNECTION: Connection = new Connection("https://dawn-red-log.solana-mainnet.quiknode.pro/ff88020a7deb8e7d855ad7c5125f489ef1e9db71/");
+// Serum DEX program ID
+const PROGRAMADDRESS: PublicKey =
+  new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin");
+
 exports.addSerumPrices = functions
   .region('asia-south1')
   .pubsub
   .schedule("*/15 * * * *").onRun(async () => {
-    const CONNECTION: Connection = new Connection("https://dawn-red-log.solana-mainnet.quiknode.pro/ff88020a7deb8e7d855ad7c5125f489ef1e9db71/");
-    // Serum DEX program ID
-    const PROGRAMADDRESS: PublicKey =
-      new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin");
 
     async function getMarkets() {
       try {
@@ -130,7 +132,33 @@ exports.getNFT = functions
             }
           });
           const nft = nftResponse.data.data.positions_by_pk;
-          res.status(200).send(nft);
+
+          const marketClient = await Market.load(
+            CONNECTION,
+            new PublicKey(nft.market),
+            {},
+            PROGRAMADDRESS
+          );
+
+          // for coin
+          const coin = marketClient.baseSizeLotsToNumber(new BN(nft.coin_lots))
+          // for pc
+          const pc = marketClient.quoteSizeLotsToNumber(new BN(nft.pc_lots))
+
+          const range = nft.price_lot_range_div_100.split(",");
+          const minPrice = marketClient?.priceLotsToNumber(
+            new BN(+range[0]?.slice(1) * 100 ?? 0)
+          );
+          const maxPrice = marketClient?.priceLotsToNumber(
+            new BN(+range[1]?.slice(0, -1) * 100 ?? 0)
+          );
+
+          const data = {
+            market: nft.market,
+            mint: nft.mint,
+            coin, pc, minPrice, maxPrice
+          }
+          res.status(200).send(data);
         } catch (e) {
           console.log(e);
           res.status(404).send(e);
