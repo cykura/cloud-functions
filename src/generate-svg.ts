@@ -278,33 +278,75 @@ function generateSVGCurveCircleUtil(overRange: number) {
   }
 }
 
+// randomize
+function tokenToColorHex(token: string, offset: number) {
+  var hash = 0;
+  for (var i = 0; i < token.length; i++) {
+    hash = token.charCodeAt(i) + ((hash << offset) - hash);
+  }
+  var color = '#';
+  for (var i = 0; i < 3; i++) {
+    var value = (hash >> (i * 8)) & 0xFF;
+    color += ('00' + value.toString(16)).slice(-2);
+  }
+  return color;
+}
+
+function getCircleCoord(tokenAddress: string, offset: number, tokenId: string) {
+  const ranAddress = xmur3(tokenAddress.slice(6, 16))();
+  const ranId = xmur3(tokenId.slice(6, 16))();
+  return Math.abs((ranAddress >> offset) * ranId) % 255;
+}
+
+function scale(n: number, inMn: number, inMx: number, outMn: number, outMx: number) {
+  return ((((n - inMn) * (outMx - outMn)) / (inMx - inMn)) + outMn).toString();
+}
+
+function xmur3(str: string) {
+  for (var i = 0, h = 1779033703 ^ str.length; i < str.length; i++)
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353),
+      h = h << 13 | h >>> 19;
+  return function () {
+    h = Math.imul(h ^ h >>> 16, 2246822507);
+    h = Math.imul(h ^ h >>> 13, 3266489909);
+    return (h ^= h >>> 16) >>> 0;
+  };
+}
+
 
 // _____________________________________
 
+const quoteToken = "BRLsMczKuaR5w9vSubF4j8HwEGGprVAyyVgS4EX7DKEg";
+const baseToken = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+const tokenId = "0xJeet";
 
-const SVG = generateSVG({
-  quoteToken: "GKNcUmNacSJo4S2Kq3DuYRYRGw3sNUfJ4tyqd198t6vQ",
-  baseToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-  poolAddress: "BBS6zBv5UvcBSPRBSCXgpKMyUiU2oRTDbZkCj7D9M1yE",
+
+const example_params = {
+  quoteToken,
+  baseToken,
+  poolAddress: "HHvSez6nz1xC1d3E6sGEdXvn7bhsmQP5bGVf5Z7KRJXH",
   quoteTokenSymbol: "CYS",
   baseTokenSymbol: "USDC",
   feeTier: "0.5%",
   tickLower: 1.3,
   tickUpper: 2.5,
   tickSpacing: 0.1,
-  overRange: -1,
-  tokenId: "0xJeet",
-  color0: "#34d399",
-  color1: "#bfdbfe",
-  color2: "#c7d2fe",
-  color3: "#5b21b6",
-  x1: "0px",
-  y1: "0px",
-  x2: "40%",
-  y2: "40%",
-  x3: "90%",
-  y3: "90%",
-});
+  overRange: 1,
+  tokenId,
+  color0: tokenToColorHex(quoteToken, 137),
+  color1: tokenToColorHex(baseToken, 137),
+  color2: tokenToColorHex(quoteToken, 20),
+  color3: tokenToColorHex(baseToken, 20),
+  x1: scale(getCircleCoord(quoteToken, 16, tokenId), 0, 255, 16, 274),
+  y1: scale(getCircleCoord(baseToken, 16, tokenId), 0, 255, 100, 484),
+  x2: scale(getCircleCoord(quoteToken, 32, tokenId), 0, 255, 16, 274),
+  y2: scale(getCircleCoord(baseToken, 32, tokenId), 0, 255, 100, 484),
+  x3: scale(getCircleCoord(quoteToken, 48, tokenId), 0, 255, 16, 274),
+  y3: scale(getCircleCoord(baseToken, 48, tokenId), 0, 255, 100, 484)
+};
+
+
+const SVG = generateSVG(example_params);
 
 fs.writeFile(path.join(__dirname, '/pool.svg'), SVG, err => {
   console.log(err);
