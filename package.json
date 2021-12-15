@@ -2,9 +2,10 @@
   "name": "cloud-functions",
   "version": "1.0.0",
   "description": "",
-  "main": "src/nft.ts",
+  "main": "src/generate-svg.ts",
   "scripts": {
-    "dev:nft": "nodemon src/nft.ts"
+    "dev:nft": "nodemon src/nft.ts",
+    "dev:svg": "nodemon src/generate-svg.ts"
   },
   "keywords": [],
   "author": "Cyclos Finance",

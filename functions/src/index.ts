@@ -168,7 +168,7 @@ exports.getNFT = functions
                 value: `[${minPrice}, ${maxPrice})`
               },
               {
-                trait_type: "In Range",
+                trait_type: "Is Active",
                 value: `${nft.liquidity_contributions?.length ? "Yes" : "No"}`
               },
             ]
