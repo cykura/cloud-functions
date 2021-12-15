@@ -1,4 +1,6 @@
 import { base64 } from "@firebase/util";
+import fs from "fs";
+import path from "path";
 import { SVGparamsTypes } from "./types";
 
 
@@ -188,6 +190,23 @@ function generateSVGPositionDataAndLocationCurve(tokenId: string, tickLower: num
 }
 
 function generateSVGRareSparkle(tokenId: string, poolAddress: string): string {
+  const isRare = true;
+  if (isRare) {
+    return (`
+      <g style="transform:translate(226px, 392px)">
+        <rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />
+        <g>
+          <path style="transform:translate(6px,6px)" d="
+            M12 0L12.6522 9.56587L18 1.6077L13.7819 10.2181L22.3923 6L14.4341 11.3478L24 12L14.4341 
+            12.6522L22.3923 18L13.7819 13.7819L18 22.3923L12.6522 14.4341L12 24L11.3478 14.4341L6 22.39 23L10.2181 
+            13.7819L1.6077 18L9.56587 12.6522L0 12L9.56587 11.3478L1.6077 6L10.2181 10.2181L6 1.6077L11.3478 9.56587L12 0Z
+            " fill="white" 
+          />
+          <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="10s" repeatCount="indefinite"/>
+        </g>
+      </g>      
+    `);
+  }
   return "";
 }
 
@@ -261,28 +280,32 @@ function generateSVGCurveCircleUtil(overRange: number) {
 
 
 // _____________________________________
-console.log(
-  generateSVG({
-    quoteToken: "GKNcUmNacSJo4S2Kq3DuYRYRGw3sNUfJ4tyqd198t6vQ",
-    baseToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-    poolAddress: "BBS6zBv5UvcBSPRBSCXgpKMyUiU2oRTDbZkCj7D9M1yE",
-    quoteTokenSymbol: "CYS",
-    baseTokenSymbol: "USDC",
-    feeTier: "0.5%",
-    tickLower: 1.3,
-    tickUpper: 2.5,
-    tickSpacing: 0.1,
-    overRange: 1,
-    tokenId: "0xJeet",
-    color0: "#34d399",
-    color1: "#0f0",
-    color2: "#00f",
-    color3: "#f00",
-    x1: "0",
-    y1: "0",
-    x2: "4",
-    y2: "4",
-    x3: "8",
-    y3: "8",
-  })
-);
+
+
+const SVG = generateSVG({
+  quoteToken: "GKNcUmNacSJo4S2Kq3DuYRYRGw3sNUfJ4tyqd198t6vQ",
+  baseToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  poolAddress: "BBS6zBv5UvcBSPRBSCXgpKMyUiU2oRTDbZkCj7D9M1yE",
+  quoteTokenSymbol: "CYS",
+  baseTokenSymbol: "USDC",
+  feeTier: "0.5%",
+  tickLower: 1.3,
+  tickUpper: 2.5,
+  tickSpacing: 0.1,
+  overRange: 0,
+  tokenId: "0xJeet",
+  color0: "#34d399",
+  color1: "#0f0",
+  color2: "#00f",
+  color3: "#f00",
+  x1: "0",
+  y1: "0",
+  x2: "4",
+  y2: "4",
+  x3: "8",
+  y3: "8",
+});
+
+fs.writeFile(path.join(__dirname, '/pool.svg'), SVG, err => {
+  console.log(err);
+});
