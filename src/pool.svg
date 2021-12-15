@@ -1,16 +1,16 @@
 <svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"  xmlns:xlink="http://www.w3.org/1999/xlink">
     <defs>
-      <filter id="f1"><feImage result="p0" xlink:href="data:image/svg+xml;base64,
-        CiAgICAgICAgICA8c3ZnIHdpZHRoPScyOTAnIGhlaWdodD0nNTAwJyB2aWV3Qm94PScwIDAgMjkwIDUwMCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJz4KICAgICAgICAgICAgPHJlY3Qgd2lkdGg9JzI5MHB4JyBoZWlnaHQ9JzUwMHB4JyBmaWxsPScjMzRkMzk5JyAvPgogICAgICAgICAgPC9zdmc+CiAgICAgICAg"
+      <filter id="f1"><feImage result="p0" xlink:href=
+        "data:image/svg+xml;base64,CiAgICAgICAgICA8c3ZnIHdpZHRoPScyOTAnIGhlaWdodD0nNTAwJyB2aWV3Qm94PScwIDAgMjkwIDUwMCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJz4KICAgICAgICAgICAgPHJlY3Qgd2lkdGg9JzI5MHB4JyBoZWlnaHQ9JzUwMHB4JyBmaWxsPScjMzRkMzk5JyAvPgogICAgICAgICAgPC9zdmc+CiAgICAgICAg"
       />
-        <feImage result="p1" xlink:href="data:image/svg+xml;base64,
-          CiAgICAgICAgICAgIDxzdmcgd2lkdGg9JzI5MCcgaGVpZ2h0PSc1MDAnIHZpZXdCb3g9JzAgMCAyOTAgNTAwJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPgogICAgICAgICAgICAgIDxjaXJjbGUgY3g9JzAnIGN5PScwJyByPScxMjBweCcgZmlsbD0nIzBmMCcgLz4KICAgICAgICAgICAgPC9zdmc+CiAgICAgICAgICA="
+        <feImage result="p1" xlink:href=
+          "data:image/svg+xml;base64,CiAgICAgICAgICAgIDxzdmcgd2lkdGg9JzI5MCcgaGVpZ2h0PSc1MDAnIHZpZXdCb3g9JzAgMCAyOTAgNTAwJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPgogICAgICAgICAgICAgIDxjaXJjbGUgY3g9JzBweCcgY3k9JzBweCcgcj0nMTIwcHgnIGZpbGw9JyNiZmRiZmUnIC8+CiAgICAgICAgICAgIDwvc3ZnPgogICAgICAgICAg"
         />
-        <feImage result="p2" xlink:href="data:image/svg+xml;base64,
-          CiAgICAgICAgICAgIDxzdmcgd2lkdGg9JzI5MCcgaGVpZ2h0PSc1MDAnIHZpZXdCb3g9JzAgMCAyOTAgNTAwJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPgogICAgICAgICAgICAgIDxjaXJjbGUgY3g9JzQnIGN5PSc0JyByPScxMjBweCcgZmlsbD0nIzAwZicgLz4KICAgICAgICAgICAgPC9zdmc+CiAgICAgICAgICA="
+        <feImage result="p2" xlink:href=
+          "data:image/svg+xml;base64,CiAgICAgICAgICAgIDxzdmcgd2lkdGg9JzI5MCcgaGVpZ2h0PSc1MDAnIHZpZXdCb3g9JzAgMCAyOTAgNTAwJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPgogICAgICAgICAgICAgIDxjaXJjbGUgY3g9JzQwJScgY3k9JzQwJScgcj0nMTIwcHgnIGZpbGw9JyNjN2QyZmUnIC8+CiAgICAgICAgICAgIDwvc3ZnPgogICAgICAgICAg"
         />
-        <feImage result="p3" xlink:href="data:image/svg+xml;base64,
-          CiAgICAgICAgICAgIDxzdmcgd2lkdGg9JzI5MCcgaGVpZ2h0PSc1MDAnIHZpZXdCb3g9JzAgMCAyOTAgNTAwJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPgogICAgICAgICAgICAgIDxjaXJjbGUgY3g9JzgnIGN5PSc4JyByPScxMDBweCcgZmlsbD0nI2YwMCcgLz4KICAgICAgICAgICAgPC9zdmc+CiAgICAgICAgICA="
+        <feImage result="p3" xlink:href=
+          "data:image/svg+xml;base64,CiAgICAgICAgICAgIDxzdmcgd2lkdGg9JzI5MCcgaGVpZ2h0PSc1MDAnIHZpZXdCb3g9JzAgMCAyOTAgNTAwJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPgogICAgICAgICAgICAgIDxjaXJjbGUgY3g9JzkwJScgY3k9JzkwJScgcj0nMTAwcHgnIGZpbGw9JyM1YjIxYjYnIC8+CiAgICAgICAgICAgIDwvc3ZnPgogICAgICAgICAg"
         />
         <feBlend mode="overlay" in="p0" in2="p1" /><feBlend mode="exclusion" in2="p2" />
         <feBlend mode="overlay" in2="p3" result="blendOut" />
@@ -72,7 +72,7 @@
     <g mask="url(#fade-symbol)">
       <rect fill="none" x="0px" y="0px" width="290px" height="200px" /> 
       <text y="70px" x="32px" fill="white" font-family="'Courier New', monospace" font-weight="200" font-size="36px">
-        CYS / USDC
+        CYS/USDC
       </text>
       <text y="115px" x="32px" fill="white" font-family="'Courier New', monospace" font-weight="200" font-size="36px">
         0.5%
@@ -80,11 +80,11 @@
     </g>
     <rect x="16" y="16" width="258" height="468" rx="26" ry="26" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />
   
-    <g mask="url(#none)" style="transform:translate(72px,189px)">
+    <g mask="url(#fade-down)" style="transform:translate(72px,189px)">
       <rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />
       <path d='M1 1C33 57 89 113 145 145' stroke="rgba(0,0,0,0.3)" stroke-width="32px" fill="none" stroke-linecap="round" />
     </g>
-    <g mask="url(#none)" style="transform:translate(72px,189px)">
+    <g mask="url(#fade-down)" style="transform:translate(72px,189px)">
       <rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />
       <path d='M1 1C33 57 89 113 145 145' stroke="rgba(255,255,255,1)" fill="none" stroke-linecap="round" />
     </g>
@@ -95,8 +95,8 @@
         r="4px" fill="white" 
       />
       <circle 
-        cx='217px' 
-        cy='334px' 
+        cx='73px' 
+        cy='190px' 
         r="24px" fill="none" stroke="white"
       />
     

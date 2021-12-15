@@ -32,29 +32,29 @@ const generateSVG = (params: SVGparamsTypes) => {
 function generateSVGDefs(params: SVGparamsTypes): string {
   return (`
     <defs>
-      <filter id="f1"><feImage result="p0" xlink:href="data:image/svg+xml;base64,
-        ${base64.encodeString(`
+      <filter id="f1"><feImage result="p0" xlink:href=
+        "data:image/svg+xml;base64,${base64.encodeString(`
           <svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'>
             <rect width='290px' height='500px' fill='${params.color0}' />
           </svg>
         `)}"
       />
-        <feImage result="p1" xlink:href="data:image/svg+xml;base64,
-          ${base64.encodeString(`
+        <feImage result="p1" xlink:href=
+          "data:image/svg+xml;base64,${base64.encodeString(`
             <svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'>
               <circle cx='${params.x1}' cy='${params.y1}' r='120px' fill='${params.color1}' />
             </svg>
           `)}"
         />
-        <feImage result="p2" xlink:href="data:image/svg+xml;base64,
-          ${base64.encodeString(`
+        <feImage result="p2" xlink:href=
+          "data:image/svg+xml;base64,${base64.encodeString(`
             <svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'>
               <circle cx='${params.x2}' cy='${params.y2}' r='120px' fill='${params.color2}' />
             </svg>
           `)}"
         />
-        <feImage result="p3" xlink:href="data:image/svg+xml;base64,
-          ${base64.encodeString(`
+        <feImage result="p3" xlink:href=
+          "data:image/svg+xml;base64,${base64.encodeString(`
             <svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'>
               <circle cx='${params.x3}' cy='${params.y3}' r='100px' fill='${params.color3}' />
             </svg>
@@ -128,7 +128,7 @@ function generateSVGCardMantle(quoteTokenSymbol: string, baseTokenSymbol: string
     <g mask="url(#fade-symbol)">
       <rect fill="none" x="0px" y="0px" width="290px" height="200px" /> 
       <text y="70px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-weight="200" font-size="36px">
-        ${quoteTokenSymbol} / ${baseTokenSymbol}
+        ${quoteTokenSymbol}/${baseTokenSymbol}
       </text>
       <text y="115px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-weight="200" font-size="36px">
         ${feeTier}
@@ -292,18 +292,18 @@ const SVG = generateSVG({
   tickLower: 1.3,
   tickUpper: 2.5,
   tickSpacing: 0.1,
-  overRange: 0,
+  overRange: -1,
   tokenId: "0xJeet",
   color0: "#34d399",
-  color1: "#0f0",
-  color2: "#00f",
-  color3: "#f00",
-  x1: "0",
-  y1: "0",
-  x2: "4",
-  y2: "4",
-  x3: "8",
-  y3: "8",
+  color1: "#bfdbfe",
+  color2: "#c7d2fe",
+  color3: "#5b21b6",
+  x1: "0px",
+  y1: "0px",
+  x2: "40%",
+  y2: "40%",
+  x3: "90%",
+  y3: "90%",
 });
 
 fs.writeFile(path.join(__dirname, '/pool.svg'), SVG, err => {
