@@ -163,12 +163,6 @@ function generateSVGPositionDataAndLocationCurve(tokenId: string, tickLower: num
   const [xCoord, yCoord] = [0, 0];
 
   return (`
-    <g style="transform:translate(29px, 384px)">
-      <rect width='${7 * (str1length + 4)}px' height="26px" rx="8px" ry="8px" fill="rgba(0,0,0,0.6)" />
-      <text x="12px" y="17px" font-family="\'Courier New\', monospace" font-size="12px" fill="white">
-        <tspan fill="rgba(255,255,255,0.6)">ID: </tspan> ${tokenId}
-      </text>
-    </g>
     <g style="transform:translate(29px, 414px)">
       <rect width='${7 * (str2length + 4)}px' height="26px" rx="8px" ry="8px" fill="rgba(0,0,0,0.6)" />
       <text x="12px" y="17px" font-family="\'Courier New\', monospace" font-size="12px" fill="white">
@@ -279,7 +273,7 @@ function generateSVGCurveCircleUtil(overRange: number) {
 }
 
 // randomize
-function tokenToColorHex(token: string, offset: number) {
+export function tokenToColorHex(token: string, offset: number) {
   var hash = 0;
   for (var i = 0; i < token.length; i++) {
     hash = token.charCodeAt(i) + ((hash << offset) - hash);
@@ -292,13 +286,13 @@ function tokenToColorHex(token: string, offset: number) {
   return color;
 }
 
-function getCircleCoord(tokenAddress: string, offset: number, tokenId: string) {
+export function getCircleCoord(tokenAddress: string, offset: number, tokenId: string) {
   const ranAddress = xmur3(tokenAddress.slice(6, 16))();
   const ranId = xmur3(tokenId.slice(6, 16))();
   return Math.abs((ranAddress >> offset) * ranId) % 255;
 }
 
-function scale(n: number, inMn: number, inMx: number, outMn: number, outMx: number) {
+export function scale(n: number, inMn: number, inMx: number, outMn: number, outMx: number) {
   return ((((n - inMn) * (outMx - outMn)) / (inMx - inMn)) + outMn).toString();
 }
 
@@ -316,38 +310,3 @@ function xmur3(str: string) {
 
 // _____________________________________
 
-const quoteToken = "BRLsMczKuaR5w9vSubF4j8HwEGGprVAyyVgS4EX7DKEg";
-const baseToken = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-const tokenId = "0xJeet";
-
-
-const example_params = {
-  quoteToken,
-  baseToken,
-  poolAddress: "HHvSez6nz1xC1d3E6sGEdXvn7bhsmQP5bGVf5Z7KRJXH",
-  quoteTokenSymbol: "CYS",
-  baseTokenSymbol: "USDC",
-  feeTier: "0.5%",
-  tickLower: 1.3,
-  tickUpper: 2.5,
-  tickSpacing: 0.1,
-  overRange: 1,
-  tokenId,
-  color0: tokenToColorHex(quoteToken, 137),
-  color1: tokenToColorHex(baseToken, 137),
-  color2: tokenToColorHex(quoteToken, 20),
-  color3: tokenToColorHex(baseToken, 20),
-  x1: scale(getCircleCoord(quoteToken, 16, tokenId), 0, 255, 16, 274),
-  y1: scale(getCircleCoord(baseToken, 16, tokenId), 0, 255, 100, 484),
-  x2: scale(getCircleCoord(quoteToken, 32, tokenId), 0, 255, 16, 274),
-  y2: scale(getCircleCoord(baseToken, 32, tokenId), 0, 255, 100, 484),
-  x3: scale(getCircleCoord(quoteToken, 48, tokenId), 0, 255, 16, 274),
-  y3: scale(getCircleCoord(baseToken, 48, tokenId), 0, 255, 100, 484)
-};
-
-
-const SVG = generateSVG(example_params);
-
-fs.writeFile(path.join(__dirname, '/pool.svg'), SVG, err => {
-  console.log(err);
-});
