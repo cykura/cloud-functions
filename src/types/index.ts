@@ -47,7 +47,7 @@ export interface SVGparamsTypes {
   poolAddress: string;
   quoteTokenSymbol: string;
   baseTokenSymbol: string;
-  feeTier: string;
+  feeTier: number;
   tickLower: number;
   tickUpper: number;
   tickSpacing: number;

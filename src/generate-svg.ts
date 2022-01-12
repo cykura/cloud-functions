@@ -1,7 +1,8 @@
-import { base64 } from "@firebase/util";
-import fs from "fs";
-import path from "path";
-import { SVGparamsTypes } from "./types";
+import { base64 } from "@firebase/util"
+import fs from "fs"
+import path from "path"
+import { getParams } from "./position-details"
+import { SVGparamsTypes } from "./types"
 
 
 export const generateSVG = (params: SVGparamsTypes) => {
@@ -25,9 +26,9 @@ export const generateSVG = (params: SVGparamsTypes) => {
         generateSVGRareSparkle(params.tokenId, params.poolAddress),
         "</svg>"
       )
-  );
+  )
 
-};
+}
 
 function generateSVGDefs(params: SVGparamsTypes): string {
   return (`
@@ -97,7 +98,7 @@ function generateSVGDefs(params: SVGparamsTypes): string {
       </g>
       <rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />
     </g>
-  `);
+  `)
 }
 
 function generateSVGBorderText(quoteToken: string, baseToken: string, quoteTokenSymbol: string, baseTokenSymbol: string): string {
@@ -120,10 +121,10 @@ function generateSVGBorderText(quoteToken: string, baseToken: string, quoteToken
         <animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" />
       </textPath>
     </text>
-  `);
+  `)
 }
 
-function generateSVGCardMantle(quoteTokenSymbol: string, baseTokenSymbol: string, feeTier: string): string {
+function generateSVGCardMantle(quoteTokenSymbol: string, baseTokenSymbol: string, feeTier: number): string {
   return (`
     <g mask="url(#fade-symbol)">
       <rect fill="none" x="0px" y="0px" width="290px" height="200px" /> 
@@ -131,16 +132,16 @@ function generateSVGCardMantle(quoteTokenSymbol: string, baseTokenSymbol: string
         ${quoteTokenSymbol}/${baseTokenSymbol}
       </text>
       <text y="115px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-weight="200" font-size="36px">
-        ${feeTier}
+        ${feeTier}%
       </text>
     </g>
     <rect x="16" y="16" width="258" height="468" rx="26" ry="26" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />
-  `);
+  `)
 }
 
 function generageSvgCurve(tickLower: number, tickUpper: number, tickSpacing: number, overRange: number): string {
-  const fade = overRange == 1 ? '#fade-up' : overRange == -1 ? '#fade-down' : '#none';
-  const curve = getCurveUtil(tickLower, tickUpper, tickSpacing);
+  const fade = overRange == 1 ? '#fade-up' : overRange == -1 ? '#fade-down' : '#none'
+  const curve = getCurveUtil(tickLower, tickUpper, tickSpacing)
   return (`
     <g mask="url(${fade})" style="transform:translate(72px,189px)">
       <rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />
@@ -151,24 +152,18 @@ function generageSvgCurve(tickLower: number, tickUpper: number, tickSpacing: num
       <path d='${curve}' stroke="rgba(255,255,255,1)" fill="none" stroke-linecap="round" />
     </g>
     ${generateSVGCurveCircleUtil(overRange)}
-  `);
+  `)
 }
 
 function generateSVGPositionDataAndLocationCurve(tokenId: string, tickLower: number, tickUpper: number): string {
-  const tickLowerStr = tickLower < 0 ? `-${tickLower}` : tickLower.toString();
-  const tickUpperStr = tickUpper < 0 ? `-${tickUpper}` : tickUpper.toString();
-  const str1length = (tokenId).length + 4;
-  const str2length = (tickLowerStr).length + 10;
-  const str3length = (tickUpperStr).length + 10;
-  const [xCoord, yCoord] = [0, 0];
+  const tickLowerStr = tickLower.toString()
+  const tickUpperStr = tickUpper.toString()
+  const str1length = (tokenId).length + 4
+  const str2length = (tickLowerStr).length + 10
+  const str3length = (tickUpperStr).length + 10
+  const [xCoord, yCoord] = rangeLocation(tickLower, tickUpper)
 
   return (`
-    <g style="transform:translate(29px, 384px)">
-      <rect width='${7 * (str1length + 4)}px' height="26px" rx="8px" ry="8px" fill="rgba(0,0,0,0.6)" />
-      <text x="12px" y="17px" font-family="\'Courier New\', monospace" font-size="12px" fill="white">
-        <tspan fill="rgba(255,255,255,0.6)">ID: </tspan> ${tokenId}
-      </text>
-    </g>
     <g style="transform:translate(29px, 414px)">
       <rect width='${7 * (str2length + 4)}px' height="26px" rx="8px" ry="8px" fill="rgba(0,0,0,0.6)" />
       <text x="12px" y="17px" font-family="\'Courier New\', monospace" font-size="12px" fill="white">
@@ -186,11 +181,11 @@ function generateSVGPositionDataAndLocationCurve(tokenId: string, tickLower: num
       <path stroke-linecap="round" d="M8 9C8.00004 22.9494 16.2099 28 27 28" fill="none" stroke="white" />
       <circle style="transform:translate3d(${xCoord}px, ${yCoord}px, 0px)" cx="0px" cy="0px" r="4px" fill="white"/>
     </g> 
-  `);
+  `)
 }
 
 function generateSVGRareSparkle(tokenId: string, poolAddress: string): string {
-  const isRare = true;
+  const isRare = false
   if (isRare) {
     return (`
       <g style="transform:translate(226px, 392px)">
@@ -205,9 +200,9 @@ function generateSVGRareSparkle(tokenId: string, poolAddress: string): string {
           <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="10s" repeatCount="indefinite"/>
         </g>
       </g>      
-    `);
+    `)
   }
-  return "";
+  return ""
 }
 
 // utils
@@ -215,40 +210,40 @@ function generateSVGRareSparkle(tokenId: string, poolAddress: string): string {
 function getCurveUtil(
   tickLower: number, tickUpper: number, tickSpacing: number
 ) {
-  const curve1 = 'M1 1C41 41 105 105 145 145';
-  const curve2 = 'M1 1C33 49 97 113 145 145';
-  const curve3 = 'M1 1C33 57 89 113 145 145';
-  const curve4 = 'M1 1C25 65 81 121 145 145';
-  const curve5 = 'M1 1C17 73 73 129 145 145';
-  const curve6 = 'M1 1C9 81 65 137 145 145';
-  const curve7 = 'M1 1C1 89 57.5 145 145 145';
-  const curve8 = 'M1 1C1 97 49 145 145 145';
+  const curve1 = 'M1 1C41 41 105 105 145 145'
+  const curve2 = 'M1 1C33 49 97 113 145 145'
+  const curve3 = 'M1 1C33 57 89 113 145 145'
+  const curve4 = 'M1 1C25 65 81 121 145 145'
+  const curve5 = 'M1 1C17 73 73 129 145 145'
+  const curve6 = 'M1 1C9 81 65 137 145 145'
+  const curve7 = 'M1 1C1 89 57.5 145 145 145'
+  const curve8 = 'M1 1C1 97 49 145 145 145'
 
-  const tickRange = (+tickUpper - +tickLower) / +tickSpacing;
+  const tickRange = (+tickUpper - +tickLower) / +tickSpacing
   if (tickRange <= 4) {
-    return curve1;
+    return curve1
   } else if (tickRange <= 8) {
-    return curve2;
+    return curve2
   } else if (tickRange <= 16) {
-    return curve3;
+    return curve3
   } else if (tickRange <= 32) {
-    return curve4;
+    return curve4
   } else if (tickRange <= 64) {
-    return curve5;
+    return curve5
   } else if (tickRange <= 128) {
-    return curve6;
+    return curve6
   } else if (tickRange <= 256) {
-    return curve7;
+    return curve7
   } else {
-    return curve8;
+    return curve8
   }
 }
 
 function generateSVGCurveCircleUtil(overRange: number) {
-  const curvex1 = '73';
-  const curvey1 = '190';
-  const curvex2 = '217';
-  const curvey2 = '334';
+  const curvex1 = '73'
+  const curvey1 = '190'
+  const curvex2 = '217'
+  const curvey2 = '334'
   if (overRange == 1 || overRange == -1) {
     return (`
       <circle 
@@ -261,7 +256,7 @@ function generateSVGCurveCircleUtil(overRange: number) {
         cy='${overRange == -1 ? curvey1 : curvey2}px' 
         r="24px" fill="none" stroke="white"
       />
-    `);
+    `)
   } else {
     return (`
       <circle 
@@ -274,80 +269,104 @@ function generateSVGCurveCircleUtil(overRange: number) {
         cy='${curvey2}px' 
         r="24px" fill="none" stroke="white"
       />
-    `);
+    `)
   }
 }
 
 // randomize
-function tokenToColorHex(token: string, offset: number) {
-  var hash = 0;
+export function tokenToColorHex(token: string, offset: number) {
+  var hash = 0
   for (var i = 0; i < token.length; i++) {
-    hash = token.charCodeAt(i) + ((hash << offset) - hash);
+    hash = token.charCodeAt(i) + ((hash << offset) - hash)
   }
-  var color = '#';
+  var color = '#'
   for (var i = 0; i < 3; i++) {
-    var value = (hash >> (i * 8)) & 0xFF;
-    color += ('00' + value.toString(16)).slice(-2);
+    var value = (hash >> (i * 8)) & 0xFF
+    color += ('00' + value.toString(16)).slice(-2)
   }
-  return color;
+  return color
 }
 
-function getCircleCoord(tokenAddress: string, offset: number, tokenId: string) {
-  const ranAddress = xmur3(tokenAddress.slice(6, 16))();
-  const ranId = xmur3(tokenId.slice(6, 16))();
-  return Math.abs((ranAddress >> offset) * ranId) % 255;
+export function getCircleCoord(tokenAddress: string, offset: number, tokenId: string) {
+  const ranAddress = xmur3(tokenAddress.slice(6, 16))()
+  const ranId = xmur3(tokenId.slice(6, 16))()
+  return Math.abs((ranAddress >> offset) * ranId) % 255
 }
 
-function scale(n: number, inMn: number, inMx: number, outMn: number, outMx: number) {
-  return ((((n - inMn) * (outMx - outMn)) / (inMx - inMn)) + outMn).toString();
+export function scale(n: number, inMn: number, inMx: number, outMn: number, outMx: number) {
+  return ((((n - inMn) * (outMx - outMn)) / (inMx - inMn)) + outMn).toString()
 }
 
 function xmur3(str: string) {
   for (var i = 0, h = 1779033703 ^ str.length; i < str.length; i++)
     h = Math.imul(h ^ str.charCodeAt(i), 3432918353),
-      h = h << 13 | h >>> 19;
+      h = h << 13 | h >>> 19
   return function () {
-    h = Math.imul(h ^ h >>> 16, 2246822507);
-    h = Math.imul(h ^ h >>> 13, 3266489909);
-    return (h ^= h >>> 16) >>> 0;
-  };
+    h = Math.imul(h ^ h >>> 16, 2246822507)
+    h = Math.imul(h ^ h >>> 13, 3266489909)
+    return (h ^= h >>> 16) >>> 0
+  }
+}
+
+function rangeLocation(tickLower: number, tickUpper: number) {
+  const midPoint = (tickLower + tickUpper) / 2
+  if (midPoint < -125_000) {
+    return ['8', '7']
+  } else if (midPoint < -75_000) {
+    return ['8', '10.5']
+  } else if (midPoint < -25_000) {
+    return ['8', '14.25']
+  } else if (midPoint < -5_000) {
+    return ['10', '18']
+  } else if (midPoint < 0) {
+    return ['11', '21']
+  } else if (midPoint < 5_000) {
+    return ['13', '23']
+  } else if (midPoint < 25_000) {
+    return ['15', '25']
+  } else if (midPoint < 75_000) {
+    return ['18', '26']
+  } else if (midPoint < 125_000) {
+    return ['21', '27']
+  } else {
+    return ['24', '27']
+  }
 }
 
 
 // _____________________________________
 
-const quoteToken = "BRLsMczKuaR5w9vSubF4j8HwEGGprVAyyVgS4EX7DKEg";
-const baseToken = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-const tokenId = "0xJeet";
+getParams("7vA9bFYHm5aGSyWY1aamaVDtkqrLYc5BjznVhMVYBw56").then(p => {
+  if (!p) return
+  const tokenId = p.TOKEN_ID
+  const quoteToken = p.TOKEN1
+  const baseToken = p.TOKEN0
+  const obj = {
+    quoteToken,
+    baseToken,
+    poolAddress: p.POOL,
+    quoteTokenSymbol: p.TOKEN1SYM,
+    baseTokenSymbol: p.TOKEN0SYM,
+    feeTier: +p.FEE / 10000,
+    tickLower: +p.TICK_LOWER,
+    tickUpper: +p.TICK_UPPER,
+    tickSpacing: +p.TICK_SPACING,
+    overRange: +p.OVER_RANGE,
+    tokenId,
+    color0: tokenToColorHex(quoteToken, 137),
+    color1: tokenToColorHex(baseToken, 137),
+    color2: tokenToColorHex(quoteToken, 20),
+    color3: tokenToColorHex(baseToken, 20),
+    x1: scale(getCircleCoord(quoteToken, 16, tokenId), 0, 255, 16, 274),
+    y1: scale(getCircleCoord(baseToken, 16, tokenId), 0, 255, 100, 484),
+    x2: scale(getCircleCoord(quoteToken, 32, tokenId), 0, 255, 16, 274),
+    y2: scale(getCircleCoord(baseToken, 32, tokenId), 0, 255, 100, 484),
+    x3: scale(getCircleCoord(quoteToken, 48, tokenId), 0, 255, 16, 274),
+    y3: scale(getCircleCoord(baseToken, 48, tokenId), 0, 255, 100, 484)
+  }
+  const SVG = generateSVG(obj)
 
-
-const example_params = {
-  quoteToken,
-  baseToken,
-  poolAddress: "HHvSez6nz1xC1d3E6sGEdXvn7bhsmQP5bGVf5Z7KRJXH",
-  quoteTokenSymbol: "CYS",
-  baseTokenSymbol: "USDC",
-  feeTier: "0.5%",
-  tickLower: 1.3,
-  tickUpper: 2.5,
-  tickSpacing: 0.1,
-  overRange: 1,
-  tokenId,
-  color0: tokenToColorHex(quoteToken, 137),
-  color1: tokenToColorHex(baseToken, 137),
-  color2: tokenToColorHex(quoteToken, 20),
-  color3: tokenToColorHex(baseToken, 20),
-  x1: scale(getCircleCoord(quoteToken, 16, tokenId), 0, 255, 16, 274),
-  y1: scale(getCircleCoord(baseToken, 16, tokenId), 0, 255, 100, 484),
-  x2: scale(getCircleCoord(quoteToken, 32, tokenId), 0, 255, 16, 274),
-  y2: scale(getCircleCoord(baseToken, 32, tokenId), 0, 255, 100, 484),
-  x3: scale(getCircleCoord(quoteToken, 48, tokenId), 0, 255, 16, 274),
-  y3: scale(getCircleCoord(baseToken, 48, tokenId), 0, 255, 100, 484)
-};
-
-
-const SVG = generateSVG(example_params);
-
-fs.writeFile(path.join(__dirname, '/pool.svg'), SVG, err => {
-  console.log(err);
-});
+  fs.writeFile(path.join(__dirname, '/pool.svg'), SVG, err => {
+    console.log(err)
+  })
+}).catch(console.log)

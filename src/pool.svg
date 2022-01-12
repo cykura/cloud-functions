@@ -1,16 +1,16 @@
 <svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"  xmlns:xlink="http://www.w3.org/1999/xlink">
     <defs>
       <filter id="f1"><feImage result="p0" xlink:href=
-        "data:image/svg+xml;base64,CiAgICAgICAgICA8c3ZnIHdpZHRoPScyOTAnIGhlaWdodD0nNTAwJyB2aWV3Qm94PScwIDAgMjkwIDUwMCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJz4KICAgICAgICAgICAgPHJlY3Qgd2lkdGg9JzI5MHB4JyBoZWlnaHQ9JzUwMHB4JyBmaWxsPScjOGQ1M2JjJyAvPgogICAgICAgICAgPC9zdmc+CiAgICAgICAg"
+        "data:image/svg+xml;base64,CiAgICAgICAgICA8c3ZnIHdpZHRoPScyOTAnIGhlaWdodD0nNTAwJyB2aWV3Qm94PScwIDAgMjkwIDUwMCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJz4KICAgICAgICAgICAgPHJlY3Qgd2lkdGg9JzI5MHB4JyBoZWlnaHQ9JzUwMHB4JyBmaWxsPScjNDBjYTZjJyAvPgogICAgICAgICAgPC9zdmc+CiAgICAgICAg"
       />
         <feImage result="p1" xlink:href=
-          "data:image/svg+xml;base64,CiAgICAgICAgICAgIDxzdmcgd2lkdGg9JzI5MCcgaGVpZ2h0PSc1MDAnIHZpZXdCb3g9JzAgMCAyOTAgNTAwJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPgogICAgICAgICAgICAgIDxjaXJjbGUgY3g9JzE5LjAzNTI5NDExNzY0NzA2JyBjeT0nMzUyLjk4ODIzNTI5NDExNzY2JyByPScxMjBweCcgZmlsbD0nI2I3MmM3OCcgLz4KICAgICAgICAgICAgPC9zdmc+CiAgICAgICAgICA="
+          "data:image/svg+xml;base64,CiAgICAgICAgICAgIDxzdmcgd2lkdGg9JzI5MCcgaGVpZ2h0PSc1MDAnIHZpZXdCb3g9JzAgMCAyOTAgNTAwJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPgogICAgICAgICAgICAgIDxjaXJjbGUgY3g9JzExMi4xMTc2NDcwNTg4MjM1NCcgY3k9JzEwNy41Mjk0MTE3NjQ3MDU4OCcgcj0nMTIwcHgnIGZpbGw9JyNkOTc3YjcnIC8+CiAgICAgICAgICAgIDwvc3ZnPgogICAgICAgICAg"
         />
         <feImage result="p2" xlink:href=
-          "data:image/svg+xml;base64,CiAgICAgICAgICAgIDxzdmcgd2lkdGg9JzI5MCcgaGVpZ2h0PSc1MDAnIHZpZXdCb3g9JzAgMCAyOTAgNTAwJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPgogICAgICAgICAgICAgIDxjaXJjbGUgY3g9JzM0LjIxMTc2NDcwNTg4MjM1JyBjeT0nMzA2LjMwNTg4MjM1Mjk0MTInIHI9JzEyMHB4JyBmaWxsPScjOGRmZjlmJyAvPgogICAgICAgICAgICA8L3N2Zz4KICAgICAgICAgIA=="
+          "data:image/svg+xml;base64,CiAgICAgICAgICAgIDxzdmcgd2lkdGg9JzI5MCcgaGVpZ2h0PSc1MDAnIHZpZXdCb3g9JzAgMCAyOTAgNTAwJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPgogICAgICAgICAgICAgIDxjaXJjbGUgY3g9JzE2NS43NDExNzY0NzA1ODgyNCcgY3k9JzIwOS45Mjk0MTE3NjQ3MDU5JyByPScxMjBweCcgZmlsbD0nIzQwMDA1MCcgLz4KICAgICAgICAgICAgPC9zdmc+CiAgICAgICAgICA="
         />
         <feImage result="p3" xlink:href=
-          "data:image/svg+xml;base64,CiAgICAgICAgICAgIDxzdmcgd2lkdGg9JzI5MCcgaGVpZ2h0PSc1MDAnIHZpZXdCb3g9JzAgMCAyOTAgNTAwJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPgogICAgICAgICAgICAgIDxjaXJjbGUgY3g9JzE5LjAzNTI5NDExNzY0NzA2JyBjeT0nMzUyLjk4ODIzNTI5NDExNzY2JyByPScxMDBweCcgZmlsbD0nI2I3MDA2MCcgLz4KICAgICAgICAgICAgPC9zdmc+CiAgICAgICAgICA="
+          "data:image/svg+xml;base64,CiAgICAgICAgICAgIDxzdmcgd2lkdGg9JzI5MCcgaGVpZ2h0PSc1MDAnIHZpZXdCb3g9JzAgMCAyOTAgNTAwJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPgogICAgICAgICAgICAgIDxjaXJjbGUgY3g9JzExMi4xMTc2NDcwNTg4MjM1NCcgY3k9JzEwNy41Mjk0MTE3NjQ3MDU4OCcgcj0nMTAwcHgnIGZpbGw9JyNkOWZmYmYnIC8+CiAgICAgICAgICAgIDwvc3ZnPgogICAgICAgICAg"
         />
         <feBlend mode="overlay" in="p0" in2="p1" /><feBlend mode="exclusion" in2="p2" />
         <feBlend mode="overlay" in2="p3" result="blendOut" />
@@ -41,7 +41,7 @@
       </mask>
     </defs>
     <g clip-path="url(#corners)">
-      <rect fill='#8d53bc' x="0px" y="0px" width="290px" height="500px" />
+      <rect fill='#40ca6c' x="0px" y="0px" width="290px" height="500px" />
       <rect style="filter: url(#f1)" x="0px" y="0px" width="290px" height="500px" />
       <g style="filter:url(#top-region-blur); transform:scale(1.5); transform-origin:center top;">
         <rect fill="none" x="0px" y="0px" width="290px" height="500px" />
@@ -52,19 +52,19 @@
   
     <text text-rendering="optimizeSpeed">
       <textPath startOffset="-100%" fill="white" font-family="'Courier New', monospace" font-size="10px" xlink:href="#text-path-a">
-        EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 🌑 USDC
+        7HvgZSj1VqsGADkpb8jLXCVqyzniDHP5HzQCymHnrn1t 🌑 USDT
         <animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" />
       </textPath> 
       <textPath startOffset="0%" fill="white" font-family="'Courier New', monospace" font-size="10px" xlink:href="#text-path-a">
-        EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 🌑 USDC
+        7HvgZSj1VqsGADkpb8jLXCVqyzniDHP5HzQCymHnrn1t 🌑 USDT
         <animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" /> 
       </textPath>
       <textPath startOffset="50%" fill="white" font-family="'Courier New', monospace" font-size="10px" xlink:href="#text-path-a">
-        BRLsMczKuaR5w9vSubF4j8HwEGGprVAyyVgS4EX7DKEg 🌑 CYS
+        GyH7fsFCvD1Wt8DbUGEk6Hzt68SVqwRKDHSvyBS16ZHm 🌑 USDC
         <animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s"  repeatCount="indefinite" />
       </textPath>
       <textPath startOffset="-50%" fill="white" font-family="'Courier New', monospace" font-size="10px" xlink:href="#text-path-a">
-        BRLsMczKuaR5w9vSubF4j8HwEGGprVAyyVgS4EX7DKEg 🌑 CYS
+        GyH7fsFCvD1Wt8DbUGEk6Hzt68SVqwRKDHSvyBS16ZHm 🌑 USDC
         <animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" />
       </textPath>
     </text>
@@ -72,26 +72,26 @@
     <g mask="url(#fade-symbol)">
       <rect fill="none" x="0px" y="0px" width="290px" height="200px" /> 
       <text y="70px" x="32px" fill="white" font-family="'Courier New', monospace" font-weight="200" font-size="36px">
-        CYS/USDC
+        USDC/USDT
       </text>
       <text y="115px" x="32px" fill="white" font-family="'Courier New', monospace" font-weight="200" font-size="36px">
-        0.5%
+        0.05%
       </text>
     </g>
     <rect x="16" y="16" width="258" height="468" rx="26" ry="26" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />
   
-    <g mask="url(#fade-up)" style="transform:translate(72px,189px)">
+    <g mask="url(#none)" style="transform:translate(72px,189px)">
       <rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />
-      <path d='M1 1C33 57 89 113 145 145' stroke="rgba(0,0,0,0.3)" stroke-width="32px" fill="none" stroke-linecap="round" />
+      <path d='M1 1C9 81 65 137 145 145' stroke="rgba(0,0,0,0.3)" stroke-width="32px" fill="none" stroke-linecap="round" />
     </g>
-    <g mask="url(#fade-up)" style="transform:translate(72px,189px)">
+    <g mask="url(#none)" style="transform:translate(72px,189px)">
       <rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />
-      <path d='M1 1C33 57 89 113 145 145' stroke="rgba(255,255,255,1)" fill="none" stroke-linecap="round" />
+      <path d='M1 1C9 81 65 137 145 145' stroke="rgba(255,255,255,1)" fill="none" stroke-linecap="round" />
     </g>
     
       <circle 
-        cx='217px' 
-        cy='334px' 
+        cx='73px' 
+        cy='190px' 
         r="4px" fill="white" 
       />
       <circle 
@@ -101,40 +101,21 @@
       />
     
   
-    <g style="transform:translate(29px, 384px)">
-      <rect width='98px' height="26px" rx="8px" ry="8px" fill="rgba(0,0,0,0.6)" />
-      <text x="12px" y="17px" font-family="'Courier New', monospace" font-size="12px" fill="white">
-        <tspan fill="rgba(255,255,255,0.6)">ID: </tspan> 0xJeet
-      </text>
-    </g>
     <g style="transform:translate(29px, 414px)">
       <rect width='119px' height="26px" rx="8px" ry="8px" fill="rgba(0,0,0,0.6)" />
       <text x="12px" y="17px" font-family="'Courier New', monospace" font-size="12px" fill="white">
-        <tspan fill="rgba(255,255,255,0.6)">Min Tick: </tspan> 1.3
+        <tspan fill="rgba(255,255,255,0.6)">Min Tick: </tspan> -10
       </text>
     </g>
     <g style="transform:translate(29px, 444px)">
       <rect width='119px' height="26px" rx="8px" ry="8px" fill="rgba(0,0,0,0.6)" />
       <text x="12px" y="17px" font-family="'Courier New', monospace" font-size="12px" fill="white">
-      <tspan fill="rgba(255,255,255,0.6)">Max Tick: </tspan> 2.5
+      <tspan fill="rgba(255,255,255,0.6)">Max Tick: </tspan> 960
       </text>
     </g>
     <g style="transform:translate(226px, 433px)">
       <rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />
       <path stroke-linecap="round" d="M8 9C8.00004 22.9494 16.2099 28 27 28" fill="none" stroke="white" />
-      <circle style="transform:translate3d(0px, 0px, 0px)" cx="0px" cy="0px" r="4px" fill="white"/>
+      <circle style="transform:translate3d(13px, 23px, 0px)" cx="0px" cy="0px" r="4px" fill="white"/>
     </g> 
-  
-      <g style="transform:translate(226px, 392px)">
-        <rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />
-        <g>
-          <path style="transform:translate(6px,6px)" d="
-            M12 0L12.6522 9.56587L18 1.6077L13.7819 10.2181L22.3923 6L14.4341 11.3478L24 12L14.4341 
-            12.6522L22.3923 18L13.7819 13.7819L18 22.3923L12.6522 14.4341L12 24L11.3478 14.4341L6 22.39 23L10.2181 
-            13.7819L1.6077 18L9.56587 12.6522L0 12L9.56587 11.3478L1.6077 6L10.2181 10.2181L6 1.6077L11.3478 9.56587L12 0Z
-            " fill="white" 
-          />
-          <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="10s" repeatCount="indefinite"/>
-        </g>
-      </g>      
-    </svg>
+  </svg>
