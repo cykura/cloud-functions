@@ -1,7 +1,9 @@
-import { base64 } from "@firebase/util";
-import fs from "fs";
-import path from "path";
-import { SVGparamsTypes } from "./types";
+import { base64 } from "@firebase/util"
+import * as anchor from '@project-serum/anchor'
+import { web3 } from '@project-serum/anchor'
+import { Keypair, PublicKey } from "@solana/web3.js"
+import idl from "./idl.json"
+import { SVGparamsTypes } from "./types"
 
 
 export const generateSVG = (params: SVGparamsTypes) => {
@@ -25,9 +27,9 @@ export const generateSVG = (params: SVGparamsTypes) => {
         generateSVGRareSparkle(params.tokenId, params.poolAddress),
         "</svg>"
       )
-  );
+  )
 
-};
+}
 
 function generateSVGDefs(params: SVGparamsTypes): string {
   return (`
@@ -97,7 +99,7 @@ function generateSVGDefs(params: SVGparamsTypes): string {
       </g>
       <rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />
     </g>
-  `);
+  `)
 }
 
 function generateSVGBorderText(quoteToken: string, baseToken: string, quoteTokenSymbol: string, baseTokenSymbol: string): string {
@@ -120,10 +122,10 @@ function generateSVGBorderText(quoteToken: string, baseToken: string, quoteToken
         <animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" />
       </textPath>
     </text>
-  `);
+  `)
 }
 
-function generateSVGCardMantle(quoteTokenSymbol: string, baseTokenSymbol: string, feeTier: string): string {
+function generateSVGCardMantle(quoteTokenSymbol: string, baseTokenSymbol: string, feeTier: number): string {
   return (`
     <g mask="url(#fade-symbol)">
       <rect fill="none" x="0px" y="0px" width="290px" height="200px" /> 
@@ -131,16 +133,16 @@ function generateSVGCardMantle(quoteTokenSymbol: string, baseTokenSymbol: string
         ${quoteTokenSymbol}/${baseTokenSymbol}
       </text>
       <text y="115px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-weight="200" font-size="36px">
-        ${feeTier}
+        ${feeTier}%
       </text>
     </g>
     <rect x="16" y="16" width="258" height="468" rx="26" ry="26" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />
-  `);
+  `)
 }
 
 function generageSvgCurve(tickLower: number, tickUpper: number, tickSpacing: number, overRange: number): string {
-  const fade = overRange == 1 ? '#fade-up' : overRange == -1 ? '#fade-down' : '#none';
-  const curve = getCurveUtil(tickLower, tickUpper, tickSpacing);
+  const fade = overRange == 1 ? '#fade-up' : overRange == -1 ? '#fade-down' : '#none'
+  const curve = getCurveUtil(tickLower, tickUpper, tickSpacing)
   return (`
     <g mask="url(${fade})" style="transform:translate(72px,189px)">
       <rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />
@@ -151,16 +153,16 @@ function generageSvgCurve(tickLower: number, tickUpper: number, tickSpacing: num
       <path d='${curve}' stroke="rgba(255,255,255,1)" fill="none" stroke-linecap="round" />
     </g>
     ${generateSVGCurveCircleUtil(overRange)}
-  `);
+  `)
 }
 
 function generateSVGPositionDataAndLocationCurve(tokenId: string, tickLower: number, tickUpper: number): string {
-  const tickLowerStr = tickLower < 0 ? `-${tickLower}` : tickLower.toString();
-  const tickUpperStr = tickUpper < 0 ? `-${tickUpper}` : tickUpper.toString();
-  const str1length = (tokenId).length + 4;
-  const str2length = (tickLowerStr).length + 10;
-  const str3length = (tickUpperStr).length + 10;
-  const [xCoord, yCoord] = [0, 0];
+  const tickLowerStr = tickLower.toString()
+  const tickUpperStr = tickUpper.toString()
+  const str1length = (tokenId).length + 4
+  const str2length = (tickLowerStr).length + 10
+  const str3length = (tickUpperStr).length + 10
+  const [xCoord, yCoord] = rangeLocation(tickLower, tickUpper)
 
   return (`
     <g style="transform:translate(29px, 414px)">
@@ -180,11 +182,11 @@ function generateSVGPositionDataAndLocationCurve(tokenId: string, tickLower: num
       <path stroke-linecap="round" d="M8 9C8.00004 22.9494 16.2099 28 27 28" fill="none" stroke="white" />
       <circle style="transform:translate3d(${xCoord}px, ${yCoord}px, 0px)" cx="0px" cy="0px" r="4px" fill="white"/>
     </g> 
-  `);
+  `)
 }
 
 function generateSVGRareSparkle(tokenId: string, poolAddress: string): string {
-  const isRare = true;
+  const isRare = false
   if (isRare) {
     return (`
       <g style="transform:translate(226px, 392px)">
@@ -199,9 +201,9 @@ function generateSVGRareSparkle(tokenId: string, poolAddress: string): string {
           <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="10s" repeatCount="indefinite"/>
         </g>
       </g>      
-    `);
+    `)
   }
-  return "";
+  return ""
 }
 
 // utils
@@ -209,40 +211,40 @@ function generateSVGRareSparkle(tokenId: string, poolAddress: string): string {
 function getCurveUtil(
   tickLower: number, tickUpper: number, tickSpacing: number
 ) {
-  const curve1 = 'M1 1C41 41 105 105 145 145';
-  const curve2 = 'M1 1C33 49 97 113 145 145';
-  const curve3 = 'M1 1C33 57 89 113 145 145';
-  const curve4 = 'M1 1C25 65 81 121 145 145';
-  const curve5 = 'M1 1C17 73 73 129 145 145';
-  const curve6 = 'M1 1C9 81 65 137 145 145';
-  const curve7 = 'M1 1C1 89 57.5 145 145 145';
-  const curve8 = 'M1 1C1 97 49 145 145 145';
+  const curve1 = 'M1 1C41 41 105 105 145 145'
+  const curve2 = 'M1 1C33 49 97 113 145 145'
+  const curve3 = 'M1 1C33 57 89 113 145 145'
+  const curve4 = 'M1 1C25 65 81 121 145 145'
+  const curve5 = 'M1 1C17 73 73 129 145 145'
+  const curve6 = 'M1 1C9 81 65 137 145 145'
+  const curve7 = 'M1 1C1 89 57.5 145 145 145'
+  const curve8 = 'M1 1C1 97 49 145 145 145'
 
-  const tickRange = (+tickUpper - +tickLower) / +tickSpacing;
+  const tickRange = (+tickUpper - +tickLower) / +tickSpacing
   if (tickRange <= 4) {
-    return curve1;
+    return curve1
   } else if (tickRange <= 8) {
-    return curve2;
+    return curve2
   } else if (tickRange <= 16) {
-    return curve3;
+    return curve3
   } else if (tickRange <= 32) {
-    return curve4;
+    return curve4
   } else if (tickRange <= 64) {
-    return curve5;
+    return curve5
   } else if (tickRange <= 128) {
-    return curve6;
+    return curve6
   } else if (tickRange <= 256) {
-    return curve7;
+    return curve7
   } else {
-    return curve8;
+    return curve8
   }
 }
 
 function generateSVGCurveCircleUtil(overRange: number) {
-  const curvex1 = '73';
-  const curvey1 = '190';
-  const curvex2 = '217';
-  const curvey2 = '334';
+  const curvex1 = '73'
+  const curvey1 = '190'
+  const curvex2 = '217'
+  const curvey2 = '334'
   if (overRange == 1 || overRange == -1) {
     return (`
       <circle 
@@ -255,7 +257,7 @@ function generateSVGCurveCircleUtil(overRange: number) {
         cy='${overRange == -1 ? curvey1 : curvey2}px' 
         r="24px" fill="none" stroke="white"
       />
-    `);
+    `)
   } else {
     return (`
       <circle 
@@ -268,45 +270,138 @@ function generateSVGCurveCircleUtil(overRange: number) {
         cy='${curvey2}px' 
         r="24px" fill="none" stroke="white"
       />
-    `);
+    `)
   }
 }
 
 // randomize
 export function tokenToColorHex(token: string, offset: number) {
-  var hash = 0;
+  var hash = 0
   for (var i = 0; i < token.length; i++) {
-    hash = token.charCodeAt(i) + ((hash << offset) - hash);
+    hash = token.charCodeAt(i) + ((hash << offset) - hash)
   }
-  var color = '#';
+  var color = '#'
   for (var i = 0; i < 3; i++) {
-    var value = (hash >> (i * 8)) & 0xFF;
-    color += ('00' + value.toString(16)).slice(-2);
+    var value = (hash >> (i * 8)) & 0xFF
+    color += ('00' + value.toString(16)).slice(-2)
   }
-  return color;
+  return color
 }
 
 export function getCircleCoord(tokenAddress: string, offset: number, tokenId: string) {
-  const ranAddress = xmur3(tokenAddress.slice(6, 16))();
-  const ranId = xmur3(tokenId.slice(6, 16))();
-  return Math.abs((ranAddress >> offset) * ranId) % 255;
+  const ranAddress = xmur3(tokenAddress.slice(6, 16))()
+  const ranId = xmur3(tokenId.slice(6, 16))()
+  return Math.abs((ranAddress >> offset) * ranId) % 255
 }
 
 export function scale(n: number, inMn: number, inMx: number, outMn: number, outMx: number) {
-  return ((((n - inMn) * (outMx - outMn)) / (inMx - inMn)) + outMn).toString();
+  return ((((n - inMn) * (outMx - outMn)) / (inMx - inMn)) + outMn).toString()
 }
 
 function xmur3(str: string) {
   for (var i = 0, h = 1779033703 ^ str.length; i < str.length; i++)
     h = Math.imul(h ^ str.charCodeAt(i), 3432918353),
-      h = h << 13 | h >>> 19;
+      h = h << 13 | h >>> 19
   return function () {
-    h = Math.imul(h ^ h >>> 16, 2246822507);
-    h = Math.imul(h ^ h >>> 13, 3266489909);
-    return (h ^= h >>> 16) >>> 0;
-  };
+    h = Math.imul(h ^ h >>> 16, 2246822507)
+    h = Math.imul(h ^ h >>> 13, 3266489909)
+    return (h ^= h >>> 16) >>> 0
+  }
 }
 
+function rangeLocation(tickLower: number, tickUpper: number) {
+  const midPoint = (tickLower + tickUpper) / 2
+  if (midPoint < -125_000) {
+    return ['8', '7']
+  } else if (midPoint < -75_000) {
+    return ['8', '10.5']
+  } else if (midPoint < -25_000) {
+    return ['8', '14.25']
+  } else if (midPoint < -5_000) {
+    return ['10', '18']
+  } else if (midPoint < 0) {
+    return ['11', '21']
+  } else if (midPoint < 5_000) {
+    return ['13', '23']
+  } else if (midPoint < 25_000) {
+    return ['15', '25']
+  } else if (midPoint < 75_000) {
+    return ['18', '26']
+  } else if (midPoint < 125_000) {
+    return ['21', '27']
+  } else {
+    return ['24', '27']
+  }
+}
 
 // _____________________________________
 
+export const USDC_LOCAL = 'GyH7fsFCvD1Wt8DbUGEk6Hzt68SVqwRKDHSvyBS16ZHm'
+export const USDT_LOCAL = '7HvgZSj1VqsGADkpb8jLXCVqyzniDHP5HzQCymHnrn1t'
+export const CYS_LOCAL = 'cb9GdmEo2vbNh8T8JeAGEVhmDSHZApHbea72eY4oVtk'
+
+const getTokenSymbol = (tokenAddress: string) => {
+  return tokenAddress === USDC_LOCAL ? 'USDC' : tokenAddress === USDT_LOCAL ? 'USDT' : 'CYS'
+}
+
+export const getParams = async (tokenId: string) => {
+  const POSITION_SEED = Buffer.from('ps')
+  const PROGRAM_ID = "cysGRNzZvgRxx9XgSDo3q5kqVTtvwxp2p3Bzs4K2LvX"
+  // Create a test wallet to listen to
+  const keypair = Keypair.fromSecretKey(
+    Uint8Array.from([
+      252, 26, 11, 109, 164, 158, 158, 132, 63, 237, 103, 133, 199, 61, 192,
+      224, 190, 12, 205, 115, 133, 30, 76, 120, 93, 68, 115, 238, 88, 133, 142,
+      240, 228, 84, 108, 18, 194, 149, 219, 241, 174, 188, 83, 138, 11, 218, 68,
+      31, 8, 90, 186, 27, 102, 127, 153, 30, 154, 9, 66, 71, 177, 154, 242, 255,
+    ])
+  );
+
+  const wallet = new anchor.Wallet(keypair)
+  const owner = wallet.publicKey
+  const connection = new web3.Connection('https://api.devnet.solana.com')
+  const provider = new anchor.Provider(connection, wallet, {})
+  const cyclosCore = new anchor.Program(idl as anchor.Idl, PROGRAM_ID, provider)
+
+  try {
+    const [tokenizedPositionState, _] = await PublicKey.findProgramAddress(
+      [POSITION_SEED, new PublicKey(tokenId).toBuffer()],
+      cyclosCore.programId
+    )
+    const tokenizedPositionData: any = await cyclosCore.account.tokenizedPositionState.fetch(tokenizedPositionState)
+    const poolId = tokenizedPositionData.poolId
+    const poolState: any = await cyclosCore.account.poolState.fetch(poolId)
+
+    const TICK_LOWER: number = tokenizedPositionData.tickLower
+    const TICK_UPPER: number = tokenizedPositionData.tickUpper
+    const POOL: string = tokenizedPositionData.poolId.toString()
+    const FEE: number = poolState.fee
+    const TICK_SPACING: number = poolState.tickSpacing
+    const TOKEN0: string = poolState.token0.toString()
+    const TOKEN1: string = poolState.token1.toString()
+    const TOKEN0SYM: string = getTokenSymbol(TOKEN0)
+    const TOKEN1SYM: string = getTokenSymbol(TOKEN1)
+    const TOKEN_ID: string = tokenId
+
+    const below = poolState && typeof TICK_LOWER === 'number' ? poolState.tick < TICK_LOWER : undefined
+    const above = poolState && typeof TICK_UPPER === 'number' ? poolState.tick >= TICK_UPPER : undefined
+    const OVER_RANGE = above ? -1 : below ? 1 : 0
+
+    return {
+      TOKEN_ID,
+      TICK_LOWER,
+      TICK_UPPER,
+      POOL,
+      FEE,
+      TICK_SPACING,
+      TOKEN0,
+      TOKEN1,
+      TOKEN0SYM,
+      TOKEN1SYM,
+      OVER_RANGE,
+    }
+  } catch (e) {
+    console.error(e)
+  }
+  return null
+}

@@ -4,6 +4,7 @@
     "noImplicitReturns": false,
     "esModuleInterop": true,
     "noUnusedLocals": false,
+    "resolveJsonModule": true,
     "outDir": "lib",
     "sourceMap": true,
     "strict": false,

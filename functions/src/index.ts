@@ -1,5 +1,5 @@
 import axios from "axios";
-import { tokenToColorHex, scale, getCircleCoord,generateSVG } from "./svg";
+import { tokenToColorHex, scale, getCircleCoord,generateSVG, getParams } from "./svg";
 import { base64 } from "@firebase/util";
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
@@ -102,6 +102,62 @@ exports.getSVG = functions
       return
     }
     cors(req, res, async () => {
+      try {
+        const mint = req.query.mint as string
+        if (!mint) {
+          res.status(200).send("Please provide a mint address")
+          return 
+        }
+
+        const p = await getParams(mint)
+        if (!p) {
+          res.status(200).send("Mint address invalid")
+          return 
+        }
+        const tokenId = p.TOKEN_ID
+        const quoteToken = p.TOKEN1
+        const baseToken = p.TOKEN0
+        const obj = {
+          quoteToken,
+          baseToken,
+          poolAddress: p.POOL,
+          quoteTokenSymbol: p.TOKEN1SYM,
+          baseTokenSymbol: p.TOKEN0SYM,
+          feeTier: +p.FEE / 10000,
+          tickLower: +p.TICK_LOWER,
+          tickUpper: +p.TICK_UPPER,
+          tickSpacing: +p.TICK_SPACING,
+          overRange: +p.OVER_RANGE,
+          tokenId,
+          color0: tokenToColorHex(quoteToken, 137),
+          color1: tokenToColorHex(baseToken, 137),
+          color2: tokenToColorHex(quoteToken, 20),
+          color3: tokenToColorHex(baseToken, 20),
+          x1: scale(getCircleCoord(quoteToken, 16, tokenId), 0, 255, 16, 274),
+          y1: scale(getCircleCoord(baseToken, 16, tokenId), 0, 255, 100, 484),
+          x2: scale(getCircleCoord(quoteToken, 32, tokenId), 0, 255, 16, 274),
+          y2: scale(getCircleCoord(baseToken, 32, tokenId), 0, 255, 100, 484),
+          x3: scale(getCircleCoord(quoteToken, 48, tokenId), 0, 255, 16, 274),
+          y3: scale(getCircleCoord(baseToken, 48, tokenId), 0, 255, 100, 484)
+        }
+        const SVG = generateSVG(obj)
+
+        res.status(200).send(`data:image/svg+xml;base64,${base64.encodeString(SVG)}`)  
+      } catch (err) {
+        res.status(200).send("Something went wrong")
+      }  
+      return  
+    })
+  });
+
+exports.getLocalSVG = functions
+  .region('asia-south1')
+  .https.onRequest((req, res) => {
+    if (req.method !== 'GET') {
+      res.status(403).send('Forbidden!')
+      return
+    }
+    cors(req, res, async () => {
       const Q = req.query
       try {
         const mint = Q.mint as string
@@ -122,7 +178,7 @@ exports.getSVG = functions
           poolAddress,
           quoteTokenSymbol,
           baseTokenSymbol,
-          feeTier,
+          feeTier: +feeTier,
           tickLower: +tickLower, 
           tickUpper: +tickUpper,
           tickSpacing: +tickSpacing,
