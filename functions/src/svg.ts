@@ -344,7 +344,7 @@ const getTokenSymbol = (tokenAddress: string) => {
   return tokenAddress === USDC_LOCAL ? 'USDC' : tokenAddress === USDT_LOCAL ? 'USDT' : 'CYS'
 }
 
-export const getParams = async (tokenId: string) => {
+export const getParams = async (tokenId: string, devnet = false) => {
   const POSITION_SEED = Buffer.from('ps')
   const PROGRAM_ID = "cysGRNzZvgRxx9XgSDo3q5kqVTtvwxp2p3Bzs4K2LvX"
   // Create a test wallet to listen to
@@ -359,7 +359,7 @@ export const getParams = async (tokenId: string) => {
 
   const wallet = new anchor.Wallet(keypair)
   const owner = wallet.publicKey
-  const connection = new web3.Connection('https://api.devnet.solana.com')
+  const connection = new web3.Connection(devnet ? 'https://api.devnet.solana.com' : 'https://dawn-red-log.solana-mainnet.quiknode.pro/ff88020a7deb8e7d855ad7c5125f489ef1e9db71/')
   const provider = new anchor.Provider(connection, wallet, {})
   const cyclosCore = new anchor.Program(idl as anchor.Idl, PROGRAM_ID, provider)
 

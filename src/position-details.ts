@@ -3,7 +3,7 @@ import { web3 } from '@project-serum/anchor'
 import { Keypair, PublicKey } from "@solana/web3.js"
 import idl from "./idl.json"
 
-const MINT = "7vA9bFYHm5aGSyWY1aamaVDtkqrLYc5BjznVhMVYBw56"
+const MINT = "H68X2spg18XLjMnKEK47p1d8F4TrZnZpzDdkWS4bgNeT"
 export const USDC_LOCAL = 'GyH7fsFCvD1Wt8DbUGEk6Hzt68SVqwRKDHSvyBS16ZHm'
 export const USDT_LOCAL = '7HvgZSj1VqsGADkpb8jLXCVqyzniDHP5HzQCymHnrn1t'
 export const SOL_LOCAL = 'EC1x3JZ1PBW4MqH711rqfERaign6cxLTBNb3mi5LK9vP'
@@ -14,7 +14,7 @@ const getTokenSymbol = (tokenAddress: string) => {
 
 export const getParams = async (tokenId: string) => {
   const POSITION_SEED = Buffer.from('ps')
-  const PROGRAM_ID = "cysonxupBUVurvLe3Kz9mYrwmNfh43gEP4MgXwHmsUk"
+  const PROGRAM_ID = "cysGRNzZvgRxx9XgSDo3q5kqVTtvwxp2p3Bzs4K2LvX"
   // Create a test wallet to listen to
   const keypair = Keypair.fromSecretKey(
     Uint8Array.from([
@@ -27,7 +27,7 @@ export const getParams = async (tokenId: string) => {
 
   const wallet = new anchor.Wallet(keypair)
   const owner = wallet.publicKey
-  const connection = new web3.Connection('http://127.0.0.1:8899')
+  const connection = new web3.Connection('https://api.devnet.solana.com')
   const provider = new anchor.Provider(connection, wallet, {})
   const cyclosCore = new anchor.Program(idl as anchor.Idl, PROGRAM_ID, provider)
 
