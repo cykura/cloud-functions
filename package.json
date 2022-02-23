@@ -6,7 +6,8 @@
   "scripts": {
     "dev:nft": "nodemon src/nft.ts",
     "dev:svg": "nodemon src/generate-svg.ts",
-    "dev:postion": "nodemon src/position-details.ts"
+    "dev:postion": "nodemon src/position-details.ts",
+    "dev:analytics": "nodemon src/analytics.ts"
   },
   "keywords": [],
   "author": "Cyclos Finance",
