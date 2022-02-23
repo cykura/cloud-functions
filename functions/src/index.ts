@@ -218,10 +218,41 @@ exports.nft = functions
           devnet = false
         }
         const p = await getParams(mint, devnet)
+        if (!p) {
+          res.status(200).send("Mint address invalid")
+          return 
+        }
+        const tokenId = p.TOKEN_ID
+        const quoteToken = p.TOKEN1
+        const baseToken = p.TOKEN0
+        const obj = {
+          quoteToken,
+          baseToken,
+          poolAddress: p.POOL,
+          quoteTokenSymbol: p.TOKEN1SYM,
+          baseTokenSymbol: p.TOKEN0SYM,
+          feeTier: +p.FEE / 10000,
+          tickLower: +p.TICK_LOWER,
+          tickUpper: +p.TICK_UPPER,
+          tickSpacing: +p.TICK_SPACING,
+          overRange: +p.OVER_RANGE,
+          tokenId,
+          color0: tokenToColorHex(quoteToken, 137),
+          color1: tokenToColorHex(baseToken, 137),
+          color2: tokenToColorHex(quoteToken, 20),
+          color3: tokenToColorHex(baseToken, 20),
+          x1: scale(getCircleCoord(quoteToken, 16, tokenId), 0, 255, 16, 274),
+          y1: scale(getCircleCoord(baseToken, 16, tokenId), 0, 255, 100, 484),
+          x2: scale(getCircleCoord(quoteToken, 32, tokenId), 0, 255, 16, 274),
+          y2: scale(getCircleCoord(baseToken, 32, tokenId), 0, 255, 100, 484),
+          x3: scale(getCircleCoord(quoteToken, 48, tokenId), 0, 255, 16, 274),
+          y3: scale(getCircleCoord(baseToken, 48, tokenId), 0, 255, 100, 484)
+        }
+        const SVG = generateSVG(obj)
         const metaData = {
           name: "Cyclos Positions NFT-V1",
           symbol: "CYS-POS",
-          image: `https://asia-south1-cyclos-finance.cloudfunctions.net/svg?mint=${mint}&devnet=${devnet}`,
+          image: `data:image/svg+xml;base64,${base64.encodeString(SVG)}`,
           external_url: "https://www.cyclos.io/",
           description: "NFT ticket representing your Liquidity Position",
           properties: {
@@ -253,12 +284,6 @@ exports.nft = functions
            {
               "trait_type": "Tick Upper",
               "value": p.TICK_UPPER
-            }
-          ],
-          creators: [
-            {
-              "address": p.POOL,
-              "share": 100
             }
           ]
         }

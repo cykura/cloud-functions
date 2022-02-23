@@ -340,13 +340,21 @@ export const USDC_LOCAL = 'GyH7fsFCvD1Wt8DbUGEk6Hzt68SVqwRKDHSvyBS16ZHm'
 export const USDT_LOCAL = '7HvgZSj1VqsGADkpb8jLXCVqyzniDHP5HzQCymHnrn1t'
 export const CYS_LOCAL = 'cb9GdmEo2vbNh8T8JeAGEVhmDSHZApHbea72eY4oVtk'
 
-const getTokenSymbol = (tokenAddress: string) => {
-  return tokenAddress === USDC_LOCAL ? 'USDC' : tokenAddress === USDT_LOCAL ? 'USDT' : 'CYS'
+
+export const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+export const USDT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'
+
+const getTokenSymbol = (tokenAddress: string, devnet=false) => {
+  if (devnet) {
+    return tokenAddress === USDC_LOCAL ? 'USDC' : tokenAddress === USDT_LOCAL ? 'USDT' : 'USDC'
+  } else {
+    return tokenAddress === USDC ? 'USDC' : tokenAddress === USDT ? 'USDT' : 'USDC'
+  }
 }
 
 export const getParams = async (tokenId: string, devnet = false) => {
   const POSITION_SEED = Buffer.from('ps')
-  const PROGRAM_ID = "cysGRNzZvgRxx9XgSDo3q5kqVTtvwxp2p3Bzs4K2LvX"
+  const PROGRAM_ID = devnet ? "cysGRNzZvgRxx9XgSDo3q5kqVTtvwxp2p3Bzs4K2LvX" : "cysPXAjehMpVKUapzbMCCnpFxUFFryEWEaLgnb9NrR8"
   // Create a test wallet to listen to
   const keypair = Keypair.fromSecretKey(
     Uint8Array.from([
@@ -379,8 +387,8 @@ export const getParams = async (tokenId: string, devnet = false) => {
     const TICK_SPACING: number = poolState.tickSpacing
     const TOKEN0: string = poolState.token0.toString()
     const TOKEN1: string = poolState.token1.toString()
-    const TOKEN0SYM: string = getTokenSymbol(TOKEN0)
-    const TOKEN1SYM: string = getTokenSymbol(TOKEN1)
+    const TOKEN0SYM: string = getTokenSymbol(TOKEN0, devnet)
+    const TOKEN1SYM: string = getTokenSymbol(TOKEN1, devnet)
     const TOKEN_ID: string = tokenId
 
     const below = poolState && typeof TICK_LOWER === 'number' ? poolState.tick < TICK_LOWER : undefined
