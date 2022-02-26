@@ -3,7 +3,7 @@ import * as anchor from '@project-serum/anchor'
 import { web3 } from '@project-serum/anchor'
 import { Keypair, PublicKey } from "@solana/web3.js"
 import idl from "./idl.json"
-import { SVGparamsTypes } from "./types"
+import { SVGparamsTypes } from "../types"
 
 
 export const generateSVG = (params: SVGparamsTypes) => {

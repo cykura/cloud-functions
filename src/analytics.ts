@@ -14,11 +14,11 @@ const getBeforeNtimeTxs = async (milliseconds: number) => {
   let nxtPage = true
   const currentTime = new Date().getTime()
   let lastDayHashList: any = []
-  const LIMIT = 5
+  const LIMIT = 10
   let txList = await getFirstNtxs(LIMIT, "")
   while (nxtPage) {
     if (beforeHash) {
-      txList = await getFirstNtxs(LIMIT, beforeHash);
+      txList = await getFirstNtxs(LIMIT, beforeHash)
     }
     beforeHash = ''
     for (const [idx, txObj] of txList.entries()) {
@@ -37,15 +37,31 @@ const getBeforeNtimeTxs = async (milliseconds: number) => {
 }
 
 (async () => {
+  let volume = 0
   try {
-    const tx24hrs = await getBeforeNtimeTxs(86400_000 * 2) //24 hours * 2 days
-    console.log(tx24hrs.length)
-    
-    tx24hrs.forEach(async (txObj: any) => {
+    const tx24hrs = await getBeforeNtimeTxs(86400_000) //24 hours * 2 days
+    for (const txObj of tx24hrs) {
       const detailedInfo = await (await axios.get(`https://public-api.solscan.io/transaction/${txObj.txHash}`)).data
-      console.log(detailedInfo.tokenBalanes); // NOTE : tokenBalanes (typo in api) !
-    })
+      console.log(detailedInfo)
+      // if (detailedInfo?.logMessage?.[3] !== "Program log: in swap") {
+      //   continue
+      // }
+      // const firstToken = detailedInfo.tokenBalanes[0] // NOTE : tokenBalanes (typo in api) !
+      // let tokenPrice = 0
+      // if (firstToken) {
+      //   tokenPrice = await (await axios.get(`https://public-api.solscan.io/market/token/${firstToken?.token?.tokenAddress}`)).data?.priceUsdt ?? 0
+      //   const balanceChange = firstToken.amount.preAmount - firstToken.amount.postAmount
+      //   const tokenChange = {
+      //     change: balanceChange,
+      //     decimals: detailedInfo.tokenBalanes?.[0]?.token?.decimals
+      //   }
+      //   const valueInUSD = Math.abs((tokenChange.change / Math.pow(10, tokenChange.decimals)) * +tokenPrice)
+      //   console.log("VI", valueInUSD);
+      //   volume += valueInUSD
+      // }
+    }
   } catch (err) {
     console.log('Error', err)
   }
+  console.log('Total Volume : ', volume)
 })()
