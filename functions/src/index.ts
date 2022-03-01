@@ -6,10 +6,13 @@ import * as admin from "firebase-admin"
 admin.initializeApp()
 const db = admin.firestore()
 
-import { Connection, PublicKey } from "@solana/web3.js"
+import { Connection, Keypair, PublicKey } from "@solana/web3.js"
 import { Market, Orderbook } from "@project-serum/serum"
 import { BN } from "@project-serum/anchor"
 import { getBeforeNtimeTxs } from "./utils/analytics"
+import * as anchor from '@project-serum/anchor'
+import { Program, web3 } from '@project-serum/anchor'
+import idl from "./utils/idl.json"
 
 const cors = require('cors')({
   origin: true,
@@ -19,6 +22,22 @@ const CONNECTION: Connection = new Connection("https://dawn-red-log.solana-mainn
 // Serum DEX program ID
 const PROGRAMADDRESS: PublicKey =
   new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
+
+const PROGRAM_ID = "cysPXAjehMpVKUapzbMCCnpFxUFFryEWEaLgnb9NrR8"
+
+const keypair = Keypair.fromSecretKey(
+  Uint8Array.from([
+    252, 26, 11, 109, 164, 158, 158, 132, 63, 237, 103, 133, 199, 61, 192,
+    224, 190, 12, 205, 115, 133, 30, 76, 120, 93, 68, 115, 238, 88, 133, 142,
+    240, 228, 84, 108, 18, 194, 149, 219, 241, 174, 188, 83, 138, 11, 218, 68,
+    31, 8, 90, 186, 27, 102, 127, 153, 30, 154, 9, 66, 71, 177, 154, 242, 255,
+  ])
+)
+
+const wallet = new anchor.Wallet(keypair)
+const connection = new web3.Connection('https://dawn-red-log.solana-mainnet.quiknode.pro/ff88020a7deb8e7d855ad7c5125f489ef1e9db71/')
+const provider = new anchor.Provider(connection, wallet, {})
+const cyclosCore = new anchor.Program(idl as anchor.Idl, PROGRAM_ID, provider)
 
 exports.addSerumPrices1 = functions
   .region('asia-south1')
@@ -175,51 +194,134 @@ exports.nft = functions
     })
   })
 
-exports.analytics = functions
+exports.encodedSvg = functions
+  .region('asia-south1')
+  .https.onRequest((req, res) => {
+    if (req.method !== 'GET') {
+      res.status(403).send('Forbidden!')
+      return
+    }
+    cors(req, res, async () => {
+      try {
+        const mint = req.query.mint as string
+        let devnet = Boolean(req.query?.devnet) ?? false
+        if (!mint) {
+          res.status(200).send("Please provide a mint address")
+          return
+        }
+        if (req.query?.devnet?.toString()?.toLowerCase() === "false") {
+          devnet = false
+        }
+
+        const p = await getParams(mint, devnet)
+        if (!p) {
+          res.status(200).send("Mint address invalid")
+          return
+        }
+        const tokenId = p.TOKEN_ID
+        const quoteToken = p.TOKEN1
+        const baseToken = p.TOKEN0
+        const obj = {
+          quoteToken,
+          baseToken,
+          poolAddress: p.POOL,
+          quoteTokenSymbol: p.TOKEN1SYM,
+          baseTokenSymbol: p.TOKEN0SYM,
+          feeTier: +p.FEE / 10000,
+          tickLower: +p.TICK_LOWER,
+          tickUpper: +p.TICK_UPPER,
+          tickSpacing: +p.TICK_SPACING,
+          overRange: +p.OVER_RANGE,
+          tokenId,
+          color0: tokenToColorHex(quoteToken, 137),
+          color1: tokenToColorHex(baseToken, 137),
+          color2: tokenToColorHex(quoteToken, 20),
+          color3: tokenToColorHex(baseToken, 20),
+          x1: scale(getCircleCoord(quoteToken, 16, tokenId), 0, 255, 16, 274),
+          y1: scale(getCircleCoord(baseToken, 16, tokenId), 0, 255, 100, 484),
+          x2: scale(getCircleCoord(quoteToken, 32, tokenId), 0, 255, 16, 274),
+          y2: scale(getCircleCoord(baseToken, 32, tokenId), 0, 255, 100, 484),
+          x3: scale(getCircleCoord(quoteToken, 48, tokenId), 0, 255, 16, 274),
+          y3: scale(getCircleCoord(baseToken, 48, tokenId), 0, 255, 100, 484)
+        }
+        const SVG = generateSVG(obj)
+
+        res.status(200).send(`data:image/svg+xml;base64,${base64.encodeString(SVG)}`)
+      } catch (err) {
+        res.status(200).send("Something went wrong")
+      }
+      return
+    })
+  })
+
+exports.logTxs = functions
+  .runWith({
+    // Ensure the function has enough memory and time
+    // to process large files
+    timeoutSeconds: 500,
+    // memory: "1GB",
+  })
   .region('asia-south1')
   .pubsub
-  .schedule("*/30 * * * *").onRun(async () => {
-    let dayVolume = 0
+  .schedule("* */6 * * *")
+  .onRun(async () => {
     try {
-      const tokenPrices = await (await axios.get(`https://api.coingecko.com/api/v3/simple/price?ids=solana%2Ccyclos%2Ctether%2Cusd-coin&vs_currencies=usd`)).data
+      // const tokenPrices = await (await axios.get(`https://api.coingecko.com/api/v3/simple/price?ids=solana%2Ccyclos%2Ctether%2Cusd-coin&vs_currencies=usd`)).data
       // const lastHrTx = await getBeforeNtimeTxs(30 * 60 * 1000)
       const lastHrTx = await getBeforeNtimeTxs(86400_000)
       for (const txObj of lastHrTx) {
         const detailedInfo = await (await axios.get(`https://public-api.solscan.io/transaction/${txObj.txHash}`)).data
-        let valueInUSD = null
-        if (detailedInfo?.logMessage?.[3] === "Program log: in swap") {
+        const encodedEvent = (detailedInfo?.logMessage?.[detailedInfo?.logMessage?.length - 3]).slice(13)
+        const decodedEvent = cyclosCore.coder.events.decode(encodedEvent)
+        if (decodedEvent?.name === "SwapEvent") {
           const firstToken = detailedInfo.tokenBalanes[0] // NOTE : tokenBalanes (typo in api) !
+          let tokenPrice = 0
           if (firstToken) {
+            tokenPrice = await (await axios.get(`https://public-api.solscan.io/market/token/${firstToken?.token?.tokenAddress}`)).data?.priceUsdt ?? 0
             const balanceChange = firstToken.amount.preAmount - firstToken.amount.postAmount
             const tokenChange = {
               change: balanceChange,
               decimals: firstToken?.token?.decimals
             }
-            let price = 0
-            switch (firstToken?.token?.symbol) {
-              case 'wSOL':
-                price = tokenPrices.solana.usd; break
-              case 'CYS':
-                price = tokenPrices.cyclos.usd; break
-              case 'USDT':
-                price = tokenPrices.tether.usd; break
-              case 'USDC':
-                price = tokenPrices['usd-coin'].usd; break
-              default:
-                0
-            }
-            valueInUSD = Math.abs((tokenChange.change / Math.pow(10, tokenChange.decimals)) * +price)
-            dayVolume += valueInUSD
+            const valueInUSD = Math.abs((tokenChange.change / Math.pow(10, tokenChange.decimals)) * +tokenPrice)
+            db.collection("swap-logs").doc(txObj.txHash).set({
+              txTime: detailedInfo.blockTime,
+              data: detailedInfo,
+              tradeValue: valueInUSD
+            }, { merge: true })
           }
-          db.collection("analytics").doc(txObj.txHash).set({
-            data: detailedInfo,
-            tradeValue: valueInUSD
-          }, { merge: true })
         }
       }
     } catch (err) {
       console.log('Error', err)
     }
-    db.collection("analytics").doc("last24hrGlobalVolume").set({ dayVolume }, { merge: true })
     return
+  })
+
+exports.stats = functions
+  .region('asia-south1')
+  .https.onRequest((req, res) => {
+    if (req.method !== 'GET') {
+      res.status(403).send('Forbidden!')
+      return
+    }
+    cors(req, res, async () => {
+      let last24hrVolume = 0
+      const analyticsRef = db.collection("swap-logs")
+      try {
+        const docs = await analyticsRef
+          .orderBy("txTime", "desc")
+          .where("txTime", ">", (new Date().getTime() - 86400_000) / 1000)
+          .get()
+
+        docs.forEach(doc => {
+          const txData = doc.data()
+          last24hrVolume += txData.tradeValue
+        })
+        res.status(200).send({ last24hrVolume })
+      } catch (err) {
+        res.status(200).send("Something went wrong")
+      }
+      return
+    })
   })
