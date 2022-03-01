@@ -263,33 +263,42 @@ exports.logTxs = functions
   })
   .region('asia-south1')
   .pubsub
-  .schedule("* */6 * * *")
+  .schedule("every 2 hours synchronized")
   .onRun(async () => {
     try {
       // const tokenPrices = await (await axios.get(`https://api.coingecko.com/api/v3/simple/price?ids=solana%2Ccyclos%2Ctether%2Cusd-coin&vs_currencies=usd`)).data
       // const lastHrTx = await getBeforeNtimeTxs(30 * 60 * 1000)
       const lastHrTx = await getBeforeNtimeTxs(86400_000)
       for (const txObj of lastHrTx) {
-        const detailedInfo = await (await axios.get(`https://public-api.solscan.io/transaction/${txObj.txHash}`)).data
-        const encodedEvent = (detailedInfo?.logMessage?.[detailedInfo?.logMessage?.length - 3]).slice(13)
-        const decodedEvent = cyclosCore.coder.events.decode(encodedEvent)
-        if (decodedEvent?.name === "SwapEvent") {
-          const firstToken = detailedInfo.tokenBalanes[0] // NOTE : tokenBalanes (typo in api) !
-          let tokenPrice = 0
-          if (firstToken) {
-            tokenPrice = await (await axios.get(`https://public-api.solscan.io/market/token/${firstToken?.token?.tokenAddress}`)).data?.priceUsdt ?? 0
-            const balanceChange = firstToken.amount.preAmount - firstToken.amount.postAmount
-            const tokenChange = {
-              change: balanceChange,
-              decimals: firstToken?.token?.decimals
+        try {
+          const detailedInfo = await (await axios.get(`https://public-api.solscan.io/transaction/${txObj.txHash}`)).data
+          const encodedEvent = (detailedInfo?.logMessage?.[detailedInfo?.logMessage?.length - 3]).slice(13)
+          const decodedEvent: any = cyclosCore.coder.events.decode(encodedEvent)
+          if (decodedEvent?.name === "SwapEvent") {
+            const firstToken = detailedInfo.tokenBalanes[0] // NOTE : tokenBalanes (typo in api) !
+            let tokenPrice = 0
+            if (firstToken) {
+              try {
+                tokenPrice = await (await axios.get(`https://public-api.solscan.io/market/token/${firstToken?.token?.tokenAddress}`)).data?.priceUsdt ?? 0
+              } catch (err) {
+                console.log("Cant fetch token price", err);
+              }
+              const balanceChange = firstToken.amount.preAmount - firstToken.amount.postAmount
+              const tokenChange = {
+                change: balanceChange,
+                decimals: firstToken?.token?.decimals
+              }
+              const valueInUSD = Math.abs((tokenChange.change / Math.pow(10, tokenChange.decimals)) * +tokenPrice)
+              db.collection("swap-logs").doc(txObj.txHash).set({
+                poolState: decodedEvent.data.poolState.toString(),
+                txTime: detailedInfo.blockTime,
+                data: detailedInfo,
+                tradeValue: valueInUSD
+              }, { merge: true })
             }
-            const valueInUSD = Math.abs((tokenChange.change / Math.pow(10, tokenChange.decimals)) * +tokenPrice)
-            db.collection("swap-logs").doc(txObj.txHash).set({
-              txTime: detailedInfo.blockTime,
-              data: detailedInfo,
-              tradeValue: valueInUSD
-            }, { merge: true })
           }
+        } catch (err) {
+          continue
         }
       }
     } catch (err) {
@@ -307,6 +316,7 @@ exports.stats = functions
     }
     cors(req, res, async () => {
       let last24hrVolume = 0
+      const volumePerPool = {}
       const analyticsRef = db.collection("swap-logs")
       try {
         const docs = await analyticsRef
@@ -316,9 +326,11 @@ exports.stats = functions
 
         docs.forEach(doc => {
           const txData = doc.data()
+          const poolAddress = txData.poolState
+          volumePerPool[poolAddress] = volumePerPool[poolAddress] ? volumePerPool[poolAddress] + txData.tradeValue : txData.tradeValue
           last24hrVolume += txData.tradeValue
         })
-        res.status(200).send({ last24hrVolume })
+        res.status(200).send({ last24hrVolume, volumePerPool })
       } catch (err) {
         res.status(200).send("Something went wrong")
       }
