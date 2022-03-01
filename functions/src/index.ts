@@ -281,7 +281,7 @@ exports.logTxs = functions
               try {
                 tokenPrice = await (await axios.get(`https://public-api.solscan.io/market/token/${firstToken?.token?.tokenAddress}`)).data?.priceUsdt ?? 0
               } catch (err) {
-                console.log("Cant fetch token price", err);
+                console.log("Cant fetch token price", err)
               }
               const balanceChange = firstToken.amount.preAmount - firstToken.amount.postAmount
               const tokenChange = {
@@ -290,9 +290,8 @@ exports.logTxs = functions
               }
               const valueInUSD = Math.abs((tokenChange.change / Math.pow(10, tokenChange.decimals)) * +tokenPrice)
               db.collection("swap-logs").doc(txObj.txHash).set({
+                ...detailedInfo,
                 poolState: decodedEvent.data.poolState.toString(),
-                txTime: detailedInfo.blockTime,
-                data: detailedInfo,
                 tradeValue: valueInUSD
               }, { merge: true })
             }
@@ -320,13 +319,29 @@ exports.stats = functions
       const analyticsRef = db.collection("swap-logs")
       try {
         let lastNsec = 86400_000
+        let user = null
         if (req.query?.lastNsec) {
           lastNsec = parseInt(req.query.lastNsec as string) * 1000
         }
-        const docs = await analyticsRef
-          .orderBy("txTime", "desc")
-          .where("txTime", ">", (new Date().getTime() - lastNsec) / 1000)
-          .get()
+        if (req.query?.user) {
+          user = req.query.user as string
+        }
+        const docs = user ?
+          lastNsec ?
+            await analyticsRef
+              .where("blockTime", ">", (new Date().getTime() - lastNsec) / 1000)
+              .where('signer', 'array-contains-any', [user])
+              .get()
+            :
+            await analyticsRef
+              .where('signer', 'array-contains-any', [user])
+              .get()
+          : lastNsec ?
+            await analyticsRef
+              .where("blockTime", ">", (new Date().getTime() - lastNsec) / 1000)
+              .get()
+            :
+            await analyticsRef.get()
 
         docs.forEach(doc => {
           const txData = doc.data()
