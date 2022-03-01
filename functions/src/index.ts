@@ -319,9 +319,13 @@ exports.stats = functions
       const volumePerPool = {}
       const analyticsRef = db.collection("swap-logs")
       try {
+        let lastNsec = 86400_000
+        if (req.query?.lastNsec) {
+          lastNsec = parseInt(req.query.lastNsec as string) * 1000
+        }
         const docs = await analyticsRef
           .orderBy("txTime", "desc")
-          .where("txTime", ">", (new Date().getTime() - 86400_000) / 1000)
+          .where("txTime", ">", (new Date().getTime() - lastNsec) / 1000)
           .get()
 
         docs.forEach(doc => {
