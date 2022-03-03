@@ -149,10 +149,10 @@ exports.nft = functions
         }
         const SVG = generateSVG(obj)
         const metaData = {
-          name: "Cyclos Positions NFT-V1",
+          name: "Cykura Positions NFT-V1",
           symbol: "CYS-POS",
           image: `data:image/svg+xml;base64,${base64.encodeString(SVG)}`,
-          external_url: "https://www.cyclos.io/",
+          external_url: "https://cykura.io/",
           description: "NFT ticket representing your Liquidity Position",
           properties: {
             files: [
