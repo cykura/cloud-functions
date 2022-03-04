@@ -13,6 +13,7 @@ import { getBeforeNtimeTxs } from "./utils/analytics"
 import * as anchor from '@project-serum/anchor'
 import { Program, web3 } from '@project-serum/anchor'
 import idl from "./utils/idl.json"
+import * as SPLToken from '@solana/spl-token'
 
 const cors = require('cors')({
   origin: true,
@@ -344,10 +345,83 @@ exports.stats = functions
             :
             await analyticsRef.get()
 
+        const poolStates: any = await cyclosCore.account.poolState.all()
+        const tokenTVL: any = {}
+        const poolDetails: any = {}
+        const tokenDetails: any = {}
+
+        for (const pool of poolStates) {
+          const { token0, token1 } = pool.account
+    
+          const ata0 = await SPLToken.Token.getAssociatedTokenAddress(
+            SPLToken.ASSOCIATED_TOKEN_PROGRAM_ID,
+            SPLToken.TOKEN_PROGRAM_ID,
+            token0,
+            pool.publicKey,
+            true
+          )
+          const ata1 = await SPLToken.Token.getAssociatedTokenAddress(
+            SPLToken.ASSOCIATED_TOKEN_PROGRAM_ID,
+            SPLToken.TOKEN_PROGRAM_ID,
+            token1,
+            pool.publicKey,
+            true
+          )
+    
+          const ata0Info = await connection.getTokenAccountBalance(ata0)
+          const ata1Info = await connection.getTokenAccountBalance(ata1)
+    
+          const poolAddress = pool.publicKey.toString()
+    
+          poolDetails[poolAddress] = {
+            ...pool.account,
+            token0amount: ata0Info.value.uiAmount,
+            token1amount: ata1Info.value.uiAmount,
+          }
+    
+          tokenTVL[token0] = tokenTVL[token0] ? tokenTVL[token0] + ata0Info.value.uiAmount : ata0Info.value.uiAmount
+          tokenTVL[token1] = tokenTVL[token1] ? tokenTVL[token1] + ata1Info.value.uiAmount : ata1Info.value.uiAmount
+        }
+    
+        const coingekoEndpointArray = []
+    
+        for (const token of Object.keys(tokenTVL)) {
+          const tokenMeta = await (await axios.get(`https://public-api.solscan.io/token/meta?tokenAddress=${token}`)).data
+          tokenDetails[token] = {
+            symbol: tokenMeta.symbol,
+            name: tokenMeta.name,
+            icon: tokenMeta.icon,
+            decimals: tokenMeta.decimals,
+            coingeckoId: tokenMeta.coingeckoId ? tokenMeta.coingeckoId : null,
+            tvl: tokenTVL[token],
+          }
+          coingekoEndpointArray.push(tokenMeta.coingeckoId)
+        }
+    
+        const coingeckoData = await (await axios.get(`https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&ids=${coingekoEndpointArray.join("%2C")}`)).data
+    
+        for (const token of Object.keys(tokenDetails)) {
+          const priceinUSD = coingeckoData[tokenDetails[token].coingeckoId]?.usd ?? 0
+          tokenDetails[token] = {
+            ...tokenDetails[token],
+            priceinUSD,
+            tvlinUSD: tokenDetails[token].tvl * priceinUSD,
+          }
+        }
+    
+        for (const pool of Object.keys(poolDetails)) {
+          const data = poolDetails[pool]
+          poolDetails[pool] = {
+            ...data,
+            tvlinUSD: data.token0amount * (tokenDetails?.[data.token0.toString()]?.priceinUSD ?? 0)
+              + data.token1amount * (tokenDetails?.[data.token1.toString()]?.priceinUSD ?? 0)
+          }
+        }
+
         for (const doc of docs.docs) {
           const txData = doc.data()
           const poolAddress = txData.poolState
-          const poolInfo: any = await cyclosCore.account.poolState.fetch(new PublicKey(poolAddress))
+          const poolInfo: any = poolDetails[poolAddress]
           if (poolInfo) {
             const token0 = poolInfo.token0.toString()
             const token1 = poolInfo.token1.toString()
@@ -360,7 +434,7 @@ exports.stats = functions
           volumePerPool[poolAddress] = volumePerPool[poolAddress] ? volumePerPool[poolAddress] + txData.tradeValue : txData.tradeValue
           last24hrVolume += txData.tradeValue
         }
-        res.status(200).send({ last24hrVolume, volumePerPool, volumePerToken })
+        res.status(200).send({ last24hrVolume, volumePerPool, volumePerToken, poolDetails, tokenDetails })
       } catch (err) {
         res.status(200).send("Something went wrong")
       }
