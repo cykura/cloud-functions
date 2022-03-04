@@ -316,6 +316,7 @@ exports.stats = functions
     cors(req, res, async () => {
       let last24hrVolume = 0
       const volumePerPool = {}
+      const volumePerToken = {}
       const analyticsRef = db.collection("swap-logs")
       try {
         let lastNsec = 86400_000
@@ -343,13 +344,23 @@ exports.stats = functions
             :
             await analyticsRef.get()
 
-        docs.forEach(doc => {
+        for (const doc of docs.docs) {
           const txData = doc.data()
           const poolAddress = txData.poolState
+          const poolInfo: any = await cyclosCore.account.poolState.fetch(new PublicKey(poolAddress))
+          if (poolInfo) {
+            const token0 = poolInfo.token0.toString()
+            const token1 = poolInfo.token1.toString()
+            volumePerToken[token0] = volumePerToken[token0] ?
+              volumePerToken[token0] + txData.tradeValue : txData.tradeValue
+
+            volumePerToken[token1] = volumePerToken[token1] ?
+              volumePerToken[token1] + txData.tradeValue : txData.tradeValue
+          }
           volumePerPool[poolAddress] = volumePerPool[poolAddress] ? volumePerPool[poolAddress] + txData.tradeValue : txData.tradeValue
           last24hrVolume += txData.tradeValue
-        })
-        res.status(200).send({ last24hrVolume, volumePerPool })
+        }
+        res.status(200).send({ last24hrVolume, volumePerPool, volumePerToken })
       } catch (err) {
         res.status(200).send("Something went wrong")
       }
