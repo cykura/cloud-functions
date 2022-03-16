@@ -316,6 +316,7 @@ exports.stats = functions
     }
     cors(req, res, async () => {
       let last24hrVolume = 0
+      let TVL = 0
       const volumePerPool = {}
       const volumePerToken = {}
       const analyticsRef = db.collection("swap-logs")
@@ -375,6 +376,14 @@ exports.stats = functions
     
           poolDetails[poolAddress] = {
             ...pool.account,
+            token0: pool.account.token0.toString(),
+            token1: pool.account.token1.toString(),
+            liqudity: pool.account.liquidity.toString(),
+            sqrtPriceX32: pool.account.sqrtPriceX32.toString(),
+            feeGrowthGlobal0X32: pool.account.feeGrowthGlobal0X32.toString(),
+            feeGrowthGlobal1X32: pool.account.feeGrowthGlobal1X32.toString(),
+            protocolFeesToken0: pool.account.protocolFeesToken0.toString(),
+            protocolFeesToken1: pool.account.protocolFeesToken1.toString(),
             token0amount: ata0Info.value.uiAmount,
             token1amount: ata1Info.value.uiAmount,
           }
@@ -386,27 +395,33 @@ exports.stats = functions
         const coingekoEndpointArray = []
     
         for (const token of Object.keys(tokenTVL)) {
-          const tokenMeta = await (await axios.get(`https://public-api.solscan.io/token/meta?tokenAddress=${token}`)).data
-          tokenDetails[token] = {
-            symbol: tokenMeta.symbol,
-            name: tokenMeta.name,
-            icon: tokenMeta.icon,
-            decimals: tokenMeta.decimals,
-            coingeckoId: tokenMeta.coingeckoId ? tokenMeta.coingeckoId : null,
-            tvl: tokenTVL[token],
+          try {
+            const tokenMeta = await (await axios.get(`https://public-api.solscan.io/token/meta?tokenAddress=${token}`))?.data
+            tokenDetails[token] = {
+              symbol: tokenMeta.symbol,
+              name: tokenMeta.name,
+              icon: tokenMeta.icon,
+              decimals: tokenMeta.decimals,
+              coingeckoId: tokenMeta.coingeckoId ? tokenMeta.coingeckoId : null,
+              tvl: tokenTVL[token],
+            }
+            coingekoEndpointArray.push(tokenMeta.coingeckoId)
+          } catch(err) {
+            console.log(err);
           }
-          coingekoEndpointArray.push(tokenMeta.coingeckoId)
         }
     
         const coingeckoData = await (await axios.get(`https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&ids=${coingekoEndpointArray.join("%2C")}`)).data
     
         for (const token of Object.keys(tokenDetails)) {
           const priceinUSD = coingeckoData[tokenDetails[token].coingeckoId]?.usd ?? 0
+          const tvlinUSD = tokenDetails[token].tvl * priceinUSD
           tokenDetails[token] = {
             ...tokenDetails[token],
             priceinUSD,
-            tvlinUSD: tokenDetails[token].tvl * priceinUSD,
+            tvlinUSD,
           }
+          TVL += tvlinUSD
         }
     
         for (const pool of Object.keys(poolDetails)) {
@@ -434,8 +449,9 @@ exports.stats = functions
           volumePerPool[poolAddress] = volumePerPool[poolAddress] ? volumePerPool[poolAddress] + txData.tradeValue : txData.tradeValue
           last24hrVolume += txData.tradeValue
         }
-        res.status(200).send({ last24hrVolume, volumePerPool, volumePerToken, poolDetails, tokenDetails })
+        res.status(200).send({ last24hrVolume, volumePerPool, volumePerToken, poolDetails, tokenDetails, TVL })
       } catch (err) {
+        console.log(err);
         res.status(200).send("Something went wrong")
       }
       return

@@ -4,6 +4,7 @@ import { web3 } from '@project-serum/anchor'
 import { Keypair, PublicKey } from "@solana/web3.js"
 import idl from "./idl.json"
 import { SVGparamsTypes } from "../types"
+import axios from "axios"
 
 
 export const generateSVG = (params: SVGparamsTypes) => {
@@ -344,11 +345,21 @@ export const CYS_LOCAL = 'cb9GdmEo2vbNh8T8JeAGEVhmDSHZApHbea72eY4oVtk'
 export const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
 export const USDT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'
 
-const getTokenSymbol = (tokenAddress: string, devnet=false) => {
+const getTokenSymbol = async (tokenAddress: string, devnet = false) => {
   if (devnet) {
-    return tokenAddress === USDC_LOCAL ? 'USDC' : tokenAddress === USDT_LOCAL ? 'USDT' : 'USDC'
-  } else {
-    return tokenAddress === USDC ? 'USDC' : tokenAddress === USDT ? 'USDT' : 'USDC'
+    switch (tokenAddress) {
+      case USDC_LOCAL: return 'USDC'
+      case USDT_LOCAL: return 'USDT'
+      case CYS_LOCAL: return 'CYS'
+      default: return '-'
+    }
+  }
+  try {
+    const tokenMeta = await (await axios.get(`https://public-api.solscan.io/token/meta?tokenAddress=${tokenAddress}`)).data
+    return tokenMeta.symbol
+  } catch (e) {
+    console.log(e)
+    return '-'
   }
 }
 
@@ -363,7 +374,7 @@ export const getParams = async (tokenId: string, devnet = false) => {
       240, 228, 84, 108, 18, 194, 149, 219, 241, 174, 188, 83, 138, 11, 218, 68,
       31, 8, 90, 186, 27, 102, 127, 153, 30, 154, 9, 66, 71, 177, 154, 242, 255,
     ])
-  );
+  )
 
   const wallet = new anchor.Wallet(keypair)
   const owner = wallet.publicKey
@@ -387,8 +398,8 @@ export const getParams = async (tokenId: string, devnet = false) => {
     const TICK_SPACING: number = poolState.tickSpacing
     const TOKEN0: string = poolState.token0.toString()
     const TOKEN1: string = poolState.token1.toString()
-    const TOKEN0SYM: string = getTokenSymbol(TOKEN0, devnet)
-    const TOKEN1SYM: string = getTokenSymbol(TOKEN1, devnet)
+    const TOKEN0SYM: string = await getTokenSymbol(TOKEN0, devnet)
+    const TOKEN1SYM: string = await getTokenSymbol(TOKEN1, devnet)
     const TOKEN_ID: string = tokenId
 
     const below = poolState && typeof TICK_LOWER === 'number' ? poolState.tick < TICK_LOWER : undefined
