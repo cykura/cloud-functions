@@ -6,7 +6,7 @@ import idl from "./idl.json"
 import { SVGparamsTypes } from "../types"
 import axios from "axios"
 
-
+// https://github.com/Uniswap/v3-periphery/blob/b771ff9a20a0fd7c3233df0eb70d4fa084766cde/contracts/libraries/NFTSVG.sol
 export const generateSVG = (params: SVGparamsTypes) => {
   return (
     '<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"  xmlns:xlink="http://www.w3.org/1999/xlink">'
@@ -269,7 +269,7 @@ function generateSVGCurveCircleUtil(overRange: number) {
       <circle 
         cx='${curvex2}px' 
         cy='${curvey2}px' 
-        r="24px" fill="none" stroke="white"
+        r="4px" fill="white"
       />
     `)
   }
