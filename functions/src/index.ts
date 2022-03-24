@@ -272,9 +272,17 @@ exports.logTxs = functions
       const lastHrTx = await getBeforeNtimeTxs(86400_000)
       for (const txObj of lastHrTx) {
         try {
+          let decodedEvent: any = null
           const detailedInfo = await (await axios.get(`https://public-api.solscan.io/transaction/${txObj.txHash}`)).data
-          const encodedEvent = (detailedInfo?.logMessage?.[detailedInfo?.logMessage?.length - 3]).slice(13)
-          const decodedEvent: any = cyclosCore.coder.events.decode(encodedEvent)
+          for (const log of detailedInfo?.logMessage) {
+            if (log.slice(0, 12) !== "Program log:") {
+              continue;
+            }
+            decodedEvent = cyclosCore.coder.events.decode(log.slice(13))
+            if (decodedEvent !== null) {
+              break;
+            }
+          }
           if (decodedEvent?.name === "SwapEvent") {
             const firstToken = detailedInfo.tokenBalanes[0] // NOTE : tokenBalanes (typo in api) !
             let tokenPrice = 0
@@ -353,7 +361,7 @@ exports.stats = functions
 
         for (const pool of poolStates) {
           const { token0, token1 } = pool.account
-    
+
           const ata0 = await SPLToken.Token.getAssociatedTokenAddress(
             SPLToken.ASSOCIATED_TOKEN_PROGRAM_ID,
             SPLToken.TOKEN_PROGRAM_ID,
@@ -368,12 +376,12 @@ exports.stats = functions
             pool.publicKey,
             true
           )
-    
+
           const ata0Info = await connection.getTokenAccountBalance(ata0)
           const ata1Info = await connection.getTokenAccountBalance(ata1)
-    
+
           const poolAddress = pool.publicKey.toString()
-    
+
           poolDetails[poolAddress] = {
             ...pool.account,
             token0: pool.account.token0.toString(),
@@ -387,13 +395,13 @@ exports.stats = functions
             token0amount: ata0Info.value.uiAmount,
             token1amount: ata1Info.value.uiAmount,
           }
-    
+
           tokenTVL[token0] = tokenTVL[token0] ? tokenTVL[token0] + ata0Info.value.uiAmount : ata0Info.value.uiAmount
           tokenTVL[token1] = tokenTVL[token1] ? tokenTVL[token1] + ata1Info.value.uiAmount : ata1Info.value.uiAmount
         }
-    
+
         const coingekoEndpointArray = []
-    
+
         for (const token of Object.keys(tokenTVL)) {
           try {
             const tokenMeta = await (await axios.get(`https://public-api.solscan.io/token/meta?tokenAddress=${token}`))?.data
@@ -406,13 +414,13 @@ exports.stats = functions
               tvl: tokenTVL[token],
             }
             coingekoEndpointArray.push(tokenMeta.coingeckoId)
-          } catch(err) {
-            console.log(err);
+          } catch (err) {
+            console.log(err)
           }
         }
-    
+
         const coingeckoData = await (await axios.get(`https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&ids=${coingekoEndpointArray.join("%2C")}`)).data
-    
+
         for (const token of Object.keys(tokenDetails)) {
           const priceinUSD = coingeckoData[tokenDetails[token].coingeckoId]?.usd ?? 0
           const tvlinUSD = tokenDetails[token].tvl * priceinUSD
@@ -423,7 +431,7 @@ exports.stats = functions
           }
           TVL += tvlinUSD
         }
-    
+
         for (const pool of Object.keys(poolDetails)) {
           const data = poolDetails[pool]
           poolDetails[pool] = {
@@ -451,7 +459,7 @@ exports.stats = functions
         }
         res.status(200).send({ last24hrVolume, volumePerPool, volumePerToken, poolDetails, tokenDetails, TVL })
       } catch (err) {
-        console.log(err);
+        console.log(err)
         res.status(200).send("Something went wrong")
       }
       return
