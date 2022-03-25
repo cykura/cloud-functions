@@ -327,10 +327,10 @@ exports.statsCache = functions
 
         const poolAddress = pool.publicKey.toString()
 
-        console.log(pool)
-
-
         poolDetails[poolAddress] = {
+          fee: pool.account.fee,
+          tick: pool.account.tick,
+          tickSpacing: pool.account.tickSpacing,
           token0: pool.account.token0.toString(),
           token1: pool.account.token1.toString(),
           liqudity: pool.account.liquidity.toString(),
