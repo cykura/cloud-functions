@@ -217,10 +217,10 @@ exports.logTxs = functions
           let decodedEvent: any = null
           const detailedInfo = await (await axios.get(`https://public-api.solscan.io/transaction/${txObj.txHash}`)).data
           for (const log of detailedInfo?.logMessage) {
-            if (log.slice(0, 12) !== "Program log:") {
+            if (log.slice(0, 13) !== "Program data:" ) {
               continue
             }
-            decodedEvent = cyclosCore.coder.events.decode(log.slice(13))
+            decodedEvent = cyclosCore.coder.events.decode(log.slice(14))
             if (decodedEvent !== null) {
               break
             }
