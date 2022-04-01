@@ -74,7 +74,7 @@ app.get('/nft', async (req, res) => {
     }
   });
   const nft = nftResponse.data.data.positions_by_pk;
-  const CONNECTION: Connection = new Connection("https://dawn-red-log.solana-mainnet.quiknode.pro/ff88020a7deb8e7d855ad7c5125f489ef1e9db71/");
+  const CONNECTION: Connection = new Connection("https://ssc-dao.genesysgo.net");
 
   const marketClient = await Market.load(
     CONNECTION,

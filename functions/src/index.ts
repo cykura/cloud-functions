@@ -19,7 +19,7 @@ const cors = require('cors')({
   origin: true,
 })
 
-const CONNECTION: Connection = new Connection("https://dawn-red-log.solana-mainnet.quiknode.pro/ff88020a7deb8e7d855ad7c5125f489ef1e9db71/")
+const CONNECTION: Connection = new Connection("https://ssc-dao.genesysgo.net")
 // Serum DEX program ID
 const PROGRAMADDRESS: PublicKey =
   new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
@@ -36,7 +36,7 @@ const keypair = Keypair.fromSecretKey(
 )
 
 const wallet = new anchor.Wallet(keypair)
-const connection = new web3.Connection('https://dawn-red-log.solana-mainnet.quiknode.pro/ff88020a7deb8e7d855ad7c5125f489ef1e9db71/')
+const connection = new web3.Connection('https://ssc-dao.genesysgo.net')
 const provider = new anchor.Provider(connection, wallet, {})
 const cyclosCore = new anchor.Program(idl as anchor.Idl, PROGRAM_ID, provider)
 

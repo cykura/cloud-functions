@@ -3,7 +3,7 @@ import { Market, MARKETS, Orderbook } from '@project-serum/serum';
 import axios from "axios";
 
 
-const CONNECTION = new Connection("https://dawn-red-log.solana-mainnet.quiknode.pro/ff88020a7deb8e7d855ad7c5125f489ef1e9db71/");
+const CONNECTION = new Connection("https://ssc-dao.genesysgo.net");
 // Serum DEX program ID
 const PROGRAMADDRESS = new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin");
 

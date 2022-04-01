@@ -11,7 +11,7 @@ const SQS_QUEUE_URL = "https://sqs.ap-south-1.amazonaws.com/024701485805/Trial.f
 // Configs
 
 async function run() {
-    const connection = new Connection('https://dawn-red-log.solana-mainnet.quiknode.pro/ff88020a7deb8e7d855ad7c5125f489ef1e9db71/')
+    const connection = new Connection('https://ssc-dao.genesysgo.net')
     const k = new Keypair();
 
     // This seems to work.
