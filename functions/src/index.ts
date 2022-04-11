@@ -217,7 +217,7 @@ exports.logTxs = functions
           let decodedEvent: any = null
           const detailedInfo = await (await axios.get(`https://public-api.solscan.io/transaction/${txObj.txHash}`)).data
           for (const log of detailedInfo?.logMessage) {
-            if (log.slice(0, 13) !== "Program data:" ) {
+            if (log.slice(0, 13) !== "Program data:") {
               continue
             }
             decodedEvent = cyclosCore.coder.events.decode(log.slice(14))
@@ -411,9 +411,32 @@ exports.statsCache = functions
     } catch (err) {
       console.log(err)
     }
-
   })
 
+exports.cumulativeVolume = functions
+  .runWith({
+    // Ensure the function has enough memory and time
+    // to process large files
+    timeoutSeconds: 500,
+    // memory: "1GB",
+  })
+  .region('asia-south1')
+  .pubsub
+  .schedule("every 4 hours")
+  .onRun(async () => {
+    try {
+      let allTimeVolume = 0
+      const data = await db.collection("swap-logs").get()
+      data.forEach(doc => {
+        allTimeVolume += doc.data().tradeValue
+      })
+      db.collection("stats-cache").doc("latest").set({
+        allTimeVolume
+      }, { merge: true })
+    } catch (err) {
+      console.log(err)
+    }
+  })
 
 exports.stats = functions
   .region('asia-south1')
