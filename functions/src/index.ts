@@ -217,11 +217,15 @@ exports.logTxs = functions
           let decodedEvent: any = null
           const detailedInfo = await (await axios.get(`https://public-api.solscan.io/transaction/${txObj.txHash}`)).data
           for (const log of detailedInfo?.logMessage) {
-            if (log.slice(0, 13) !== "Program data:") {
-              continue
+            let decodedMessage = null
+            if (log.slice(0, 13) === "Program data:") {
+              decodedMessage = cyclosCore.coder.events.decode(log.slice(14))
             }
-            decodedEvent = cyclosCore.coder.events.decode(log.slice(14))
-            if (decodedEvent !== null) {
+            if (log.slice(0, 12) === "Program log:") {
+              decodedMessage = cyclosCore.coder.events.decode(log.slice(13))
+            }
+            if (decodedMessage !== null) {
+              decodedEvent = decodedMessage
               break
             }
           }
@@ -422,16 +426,20 @@ exports.cumulativeVolume = functions
   })
   .region('asia-south1')
   .pubsub
-  .schedule("every 4 hours")
+  .schedule("every 2 hours")
   .onRun(async () => {
     try {
-      let allTimeVolume = 0
-      const data = await db.collection("swap-logs").get()
+      let allTimeVolume = (await db.collection("stats-cache").doc("latest").get()).data().allTimeVolume
+      let CVlastUpdated = (await db.collection("stats-cache").doc("latest").get()).data().CVlastUpdated
+      const data = await db.collection("swap-logs")
+        .where("blockTime", ">", CVlastUpdated)
+        .get()
       data.forEach(doc => {
         allTimeVolume += doc.data().tradeValue
+        CVlastUpdated = (doc.data().blockTime > CVlastUpdated) ? doc.data().blockTime : CVlastUpdated
       })
       db.collection("stats-cache").doc("latest").set({
-        allTimeVolume
+        allTimeVolume, CVlastUpdated
       }, { merge: true })
     } catch (err) {
       console.log(err)
