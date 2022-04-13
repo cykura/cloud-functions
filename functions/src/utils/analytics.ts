@@ -12,7 +12,7 @@ export const getBeforeNtimeTxs = async (milliseconds: number) => {
   let nxtPage = true
   const currentTime = new Date().getTime()
   let lastDayHashList: any = []
-  const LIMIT = 10
+  const LIMIT = 20
   let txList = await getFirstNtxs(LIMIT, "")
   while (nxtPage) {
     if (beforeHash) {

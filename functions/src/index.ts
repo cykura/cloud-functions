@@ -201,7 +201,7 @@ exports.logTxs = functions
   .runWith({
     // Ensure the function has enough memory and time
     // to process large files
-    timeoutSeconds: 500,
+    timeoutSeconds: 540,
     // memory: "1GB",
   })
   .region('asia-south1')
@@ -211,10 +211,10 @@ exports.logTxs = functions
     try {
       // const tokenPrices = await (await axios.get(`https://api.coingecko.com/api/v3/simple/price?ids=solana%2Ccyclos%2Ctether%2Cusd-coin&vs_currencies=usd`)).data
       // const lastHrTx = await getBeforeNtimeTxs(30 * 60 * 1000)
-      const lastHrTx = await getBeforeNtimeTxs(86400_000)
+      const lastHrTx = await getBeforeNtimeTxs(86400_000 / 8)
       for (const txObj of lastHrTx) {
         try {
-          let decodedEvent: any = null
+          let decodedEvents: any = []
           const detailedInfo = await (await axios.get(`https://public-api.solscan.io/transaction/${txObj.txHash}`)).data
           for (const log of detailedInfo?.logMessage) {
             let decodedMessage = null
@@ -225,36 +225,41 @@ exports.logTxs = functions
               decodedMessage = cyclosCore.coder.events.decode(log.slice(13))
             }
             if (decodedMessage !== null) {
-              decodedEvent = decodedMessage
-              break
+              decodedEvents.push(decodedMessage)
             }
           }
-          if (decodedEvent?.name === "SwapEvent") {
-            const firstToken = detailedInfo.tokenBalanes[0] // NOTE : tokenBalanes (typo in api) !
-            let tokenPrice = 0
-            if (firstToken) {
-              try {
-                tokenPrice = await (await axios.get(`https://public-api.solscan.io/market/token/${firstToken?.token?.tokenAddress}`)).data?.priceUsdt ?? 0
-              } catch (err) {
-                console.log("Cant fetch token price", err)
+          let valueInUSD = 0
+          const poolState = []
+          for (const decodedEvent of decodedEvents) {
+            if (decodedEvent?.name === "SwapEvent") {
+              const firstToken = detailedInfo.tokenBalanes[0] // NOTE : tokenBalanes (typo in api) !
+              let tokenPrice = 0
+              if (firstToken) {
+                try {
+                  tokenPrice = await (await axios.get(`https://public-api.solscan.io/market/token/${firstToken?.token?.tokenAddress}`)).data?.priceUsdt ?? 0
+                } catch (err) {
+                  console.log("Cant fetch token price", err)
+                }
+                const balanceChange = firstToken.amount.preAmount - firstToken.amount.postAmount
+                const tokenChange = {
+                  change: balanceChange,
+                  decimals: firstToken?.token?.decimals
+                }
+                poolState.push(decodedEvent.data.poolState.toString())
+                valueInUSD += Math.abs((tokenChange.change / Math.pow(10, tokenChange.decimals)) * +tokenPrice)
               }
-              const balanceChange = firstToken.amount.preAmount - firstToken.amount.postAmount
-              const tokenChange = {
-                change: balanceChange,
-                decimals: firstToken?.token?.decimals
-              }
-              const valueInUSD = Math.abs((tokenChange.change / Math.pow(10, tokenChange.decimals)) * +tokenPrice)
-              db.collection("swap-logs").doc(txObj.txHash).set({
-                ...detailedInfo,
-                poolState: decodedEvent.data.poolState.toString(),
-                tradeValue: valueInUSD
-              }, { merge: true })
             }
           }
+          db.collection("swap-logs").doc(txObj.txHash).set({
+            ...detailedInfo,
+            poolState,
+            tradeValue: valueInUSD
+          }, { merge: true })
         } catch (err) {
           continue
         }
       }
+      console.log("💾");     
     } catch (err) {
       console.log('Error', err)
     }
@@ -394,24 +399,28 @@ exports.statsCache = functions
 
       for (const doc of docs.docs) {
         const txData = doc.data()
-        const poolAddress = txData.poolState
-        const poolInfo: any = poolDetails[poolAddress]
-        if (poolInfo) {
-          const token0 = poolInfo.token0.toString()
-          const token1 = poolInfo.token1.toString()
-          volumePerToken[token0] = volumePerToken[token0] ?
-            volumePerToken[token0] + txData.tradeValue : txData.tradeValue
-
-          volumePerToken[token1] = volumePerToken[token1] ?
-            volumePerToken[token1] + txData.tradeValue : txData.tradeValue
+        let poolAddresses = txData.poolState
+        if (typeof txData.poolState === "string") {
+          poolAddresses = [txData.poolState] 
         }
-        volumePerPool[poolAddress] = volumePerPool[poolAddress] ? volumePerPool[poolAddress] + txData.tradeValue : txData.tradeValue
-        last24hrVolume += txData.tradeValue
+        for (const poolAddress of poolAddresses) {
+          const poolInfo: any = poolDetails[poolAddress]
+          if (poolInfo) {
+            const token0 = poolInfo.token0.toString()
+            const token1 = poolInfo.token1.toString()
+            volumePerToken[token0] = volumePerToken[token0] ?
+              volumePerToken[token0] + txData.tradeValue : txData.tradeValue
+
+            volumePerToken[token1] = volumePerToken[token1] ?
+              volumePerToken[token1] + txData.tradeValue : txData.tradeValue
+          }
+          volumePerPool[poolAddress] = volumePerPool[poolAddress] ? volumePerPool[poolAddress] + txData.tradeValue : txData.tradeValue
+          last24hrVolume += txData.tradeValue
+        }
       }
       db.collection("stats-cache").doc("latest").set({
         last24hrVolume, volumePerPool, volumePerToken, poolDetails, tokenDetails, TVL
       }, { merge: true })
-      // res.status(200).send({ last24hrVolume, volumePerPool, volumePerToken, poolDetails, tokenDetails, TVL })
     } catch (err) {
       console.log(err)
     }
