@@ -1,28 +1,21 @@
-import axios from "axios"
-import { tokenToColorHex, scale, getCircleCoord, generateSVG, getParams } from "./utils/svg"
 import { base64 } from "@firebase/util"
-import * as functions from "firebase-functions"
+import * as anchor from '@project-serum/anchor'
+import { web3 } from '@project-serum/anchor'
+import * as SPLToken from '@solana/spl-token'
+import { Keypair } from "@solana/web3.js"
+import axios from "axios"
 import * as admin from "firebase-admin"
+import * as functions from "firebase-functions"
+import { getBeforeNtimeTxs } from "./utils/analytics"
+import idl from "./utils/idl.json"
+import { generateSVG, getCircleCoord, getParams, scale, tokenToColorHex } from "./utils/svg"
 admin.initializeApp()
 const db = admin.firestore()
 
-import { Connection, Keypair, PublicKey } from "@solana/web3.js"
-import { Market, Orderbook } from "@project-serum/serum"
-import { BN } from "@project-serum/anchor"
-import { getBeforeNtimeTxs } from "./utils/analytics"
-import * as anchor from '@project-serum/anchor'
-import { Program, web3 } from '@project-serum/anchor'
-import idl from "./utils/idl.json"
-import * as SPLToken from '@solana/spl-token'
 
 const cors = require('cors')({
   origin: true,
 })
-
-const CONNECTION: Connection = new Connection("https://ssc-dao.genesysgo.net")
-// Serum DEX program ID
-const PROGRAMADDRESS: PublicKey =
-  new PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
 
 const PROGRAM_ID = "cysPXAjehMpVKUapzbMCCnpFxUFFryEWEaLgnb9NrR8"
 
@@ -202,20 +195,18 @@ exports.logTxs = functions
     // Ensure the function has enough memory and time
     // to process large files
     timeoutSeconds: 540,
-    // memory: "1GB",
+    memory: "8GB",
   })
   .region('asia-south1')
   .pubsub
-  .schedule("*/30 * * * *")
+  .schedule("*/10 * * * *")
   .onRun(async () => {
     try {
-      // const tokenPrices = await (await axios.get(`https://api.coingecko.com/api/v3/simple/price?ids=solana%2Ccyclos%2Ctether%2Cusd-coin&vs_currencies=usd`)).data
-      // const lastHrTx = await getBeforeNtimeTxs(30 * 60 * 1000)
-      const lastHrTx = await getBeforeNtimeTxs(86400_000 / 8)
-      for (const txObj of lastHrTx) {
+      const lastHrTx = await getBeforeNtimeTxs(3600_000 / 2)
+      for (const txHash of lastHrTx) {
         try {
           let decodedEvents: any = []
-          const detailedInfo = await (await axios.get(`https://public-api.solscan.io/transaction/${txObj.txHash}`)).data
+          const detailedInfo = await (await axios.get(`https://public-api.solscan.io/transaction/${txHash}`)).data
           for (const log of detailedInfo?.logMessage) {
             let decodedMessage = null
             if (log.slice(0, 13) === "Program data:") {
@@ -225,7 +216,10 @@ exports.logTxs = functions
               decodedMessage = cyclosCore.coder.events.decode(log.slice(13))
             }
             if (decodedMessage !== null) {
-              decodedEvents.push(decodedMessage)
+              decodedEvents.push({
+                name: decodedMessage?.name,
+                poolState: decodedMessage.data.poolState.toString()
+              })
             }
           }
           let valueInUSD = 0
@@ -245,12 +239,12 @@ exports.logTxs = functions
                   change: balanceChange,
                   decimals: firstToken?.token?.decimals
                 }
-                poolState.push(decodedEvent.data.poolState.toString())
+                poolState.push(decodedEvent.poolState)
                 valueInUSD += Math.abs((tokenChange.change / Math.pow(10, tokenChange.decimals)) * +tokenPrice)
               }
             }
           }
-          db.collection("swap-logs").doc(txObj.txHash).set({
+          db.collection("swap-logs").doc(txHash).set({
             ...detailedInfo,
             poolState,
             tradeValue: valueInUSD
@@ -259,7 +253,7 @@ exports.logTxs = functions
           continue
         }
       }
-      console.log("💾");     
+      console.log("💾")
     } catch (err) {
       console.log('Error', err)
     }
@@ -270,8 +264,8 @@ exports.statsCache = functions
   .runWith({
     // Ensure the function has enough memory and time
     // to process large files
-    timeoutSeconds: 500,
-    // memory: "1GB",
+    timeoutSeconds: 540,
+    memory: "8GB",
   })
   .region('asia-south1')
   .pubsub
@@ -283,30 +277,9 @@ exports.statsCache = functions
     const volumePerToken = {}
     const analyticsRef = db.collection("swap-logs")
     try {
-      let lastNsec = 86400_000
-      let user = null
-      // if (req.query?.lastNsec) {
-      //   lastNsec = parseInt(req.query.lastNsec as string) * 1000
-      // }
-      // if (req.query?.user) {
-      //   user = req.query.user as string
-      // }
-      const docs = user ?
-        lastNsec ?
-          await analyticsRef
-            .where("blockTime", ">", (new Date().getTime() - lastNsec) / 1000)
-            .where('signer', 'array-contains-any', [user])
-            .get()
-          :
-          await analyticsRef
-            .where('signer', 'array-contains-any', [user])
-            .get()
-        : lastNsec ?
-          await analyticsRef
-            .where("blockTime", ">", (new Date().getTime() - lastNsec) / 1000)
-            .get()
-          :
-          await analyticsRef.get()
+      const last24hrsTxns = await analyticsRef
+        .where("blockTime", ">", (new Date().getTime() - 86400_000) / 1000)
+        .get()
 
       const poolStates: any = await cyclosCore.account.poolState.all()
       const tokenTVL: any = {}
@@ -397,11 +370,12 @@ exports.statsCache = functions
         }
       }
 
-      for (const doc of docs.docs) {
+      for (const doc of last24hrsTxns.docs) {
         const txData = doc.data()
         let poolAddresses = txData.poolState
+        if (poolAddresses.length === 0) { continue }
         if (typeof txData.poolState === "string") {
-          poolAddresses = [txData.poolState] 
+          poolAddresses = [txData.poolState]
         }
         for (const poolAddress of poolAddresses) {
           const poolInfo: any = poolDetails[poolAddress]
@@ -421,6 +395,7 @@ exports.statsCache = functions
       db.collection("stats-cache").doc("latest").set({
         last24hrVolume, volumePerPool, volumePerToken, poolDetails, tokenDetails, TVL
       }, { merge: true })
+      console.log("DONE ✅")
     } catch (err) {
       console.log(err)
     }
@@ -435,7 +410,7 @@ exports.cumulativeVolume = functions
   })
   .region('asia-south1')
   .pubsub
-  .schedule("every 2 hours")
+  .schedule("*/30 * * * *")
   .onRun(async () => {
     try {
       let allTimeVolume = (await db.collection("stats-cache").doc("latest").get()).data().allTimeVolume

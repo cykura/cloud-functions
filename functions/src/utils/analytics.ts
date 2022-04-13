@@ -20,12 +20,13 @@ export const getBeforeNtimeTxs = async (milliseconds: number) => {
     }
     beforeHash = ''
     for (const [idx, txObj] of txList.entries()) {
+      if (txObj.status !== "Success") { continue }
       const blockTime = txObj.blockTime * 1000
       if (idx === LIMIT - 1) {
         beforeHash = txObj.txHash
       }
       if ((currentTime - blockTime) <= milliseconds) {
-        lastDayHashList.push(txObj)
+        lastDayHashList.push(txObj.txHash)
       } else {
         nxtPage = false
       }
