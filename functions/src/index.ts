@@ -199,10 +199,10 @@ exports.logTxs = functions
   })
   .region('asia-south1')
   .pubsub
-  .schedule("*/10 * * * *")
+  .schedule("*/5 * * * *")
   .onRun(async () => {
     try {
-      const lastHrTx = await getBeforeNtimeTxs(3600_000 / 2)
+      const lastHrTx = await getBeforeNtimeTxs(600_000)
       for (const txHash of lastHrTx) {
         try {
           let decodedEvents: any = []
@@ -255,7 +255,7 @@ exports.logTxs = functions
       }
       console.log("💾")
     } catch (err) {
-      console.log('Error', err)
+      console.log("Error : ❌", err)
     }
     return
   })
@@ -265,7 +265,7 @@ exports.statsCache = functions
     // Ensure the function has enough memory and time
     // to process large files
     timeoutSeconds: 540,
-    memory: "8GB",
+    // memory: "8GB",
   })
   .region('asia-south1')
   .pubsub
@@ -370,10 +370,9 @@ exports.statsCache = functions
         }
       }
 
-      for (const doc of last24hrsTxns.docs) {
+      last24hrsTxns.forEach(doc => {
         const txData = doc.data()
         let poolAddresses = txData.poolState
-        if (poolAddresses.length === 0) { continue }
         if (typeof txData.poolState === "string") {
           poolAddresses = [txData.poolState]
         }
@@ -391,13 +390,13 @@ exports.statsCache = functions
           volumePerPool[poolAddress] = volumePerPool[poolAddress] ? volumePerPool[poolAddress] + txData.tradeValue : txData.tradeValue
           last24hrVolume += txData.tradeValue
         }
-      }
+      })
       db.collection("stats-cache").doc("latest").set({
         last24hrVolume, volumePerPool, volumePerToken, poolDetails, tokenDetails, TVL
       }, { merge: true })
       console.log("DONE ✅")
     } catch (err) {
-      console.log(err)
+      console.log("Error : ❌", err)
     }
   })
 
@@ -444,7 +443,7 @@ exports.stats = functions
         const data = docs.data()
         res.status(200).send(data)
       } catch (err) {
-        console.log(err)
+        console.log("Error : ❌", err)
         res.status(200).send("Something went wrong")
       }
       return
