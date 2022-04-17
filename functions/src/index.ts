@@ -199,15 +199,21 @@ exports.logTxs = functions
   })
   .region('asia-south1')
   .pubsub
-  .schedule("*/5 * * * *")
+  .schedule("*/1 * * * *")
   .onRun(async () => {
     try {
-      const lastHrTx = await getBeforeNtimeTxs(600_000)
+      const lastHrTx = await getBeforeNtimeTxs(60_000 * 2)
+      functions.logger.log("last 2 mins txns fetched ✅ :", lastHrTx.length)
       for (const txHash of lastHrTx) {
+        // console.log(txHash)
+        let docSnap = await db.collection("swap-logs").doc(txHash).get()
+        // console.log("exists: ", docSnap.exists)
+        if (docSnap.exists) { continue }
         try {
           let decodedEvents: any = []
           const detailedInfo = await (await axios.get(`https://public-api.solscan.io/transaction/${txHash}`)).data
-          for (const log of detailedInfo?.logMessage) {
+          // console.log('detailedInfo', new Date(detailedInfo.blockTime * 1000))
+          detailedInfo?.logMessage?.forEach((log: any) => {
             let decodedMessage = null
             if (log.slice(0, 13) === "Program data:") {
               decodedMessage = cyclosCore.coder.events.decode(log.slice(14))
@@ -221,41 +227,37 @@ exports.logTxs = functions
                 poolState: decodedMessage.data.poolState.toString()
               })
             }
-          }
-          let valueInUSD = 0
+          })
+          // console.log('decodedEvents', decodedEvents)
           const poolState = []
           for (const decodedEvent of decodedEvents) {
             if (decodedEvent?.name === "SwapEvent") {
-              const firstToken = detailedInfo.tokenBalanes[0] // NOTE : tokenBalanes (typo in api) !
-              let tokenPrice = 0
-              if (firstToken) {
-                try {
-                  tokenPrice = await (await axios.get(`https://public-api.solscan.io/market/token/${firstToken?.token?.tokenAddress}`)).data?.priceUsdt ?? 0
-                } catch (err) {
-                  console.log("Cant fetch token price", err)
-                }
-                const balanceChange = firstToken.amount.preAmount - firstToken.amount.postAmount
-                const tokenChange = {
-                  change: balanceChange,
-                  decimals: firstToken?.token?.decimals
-                }
-                poolState.push(decodedEvent.poolState)
-                valueInUSD += Math.abs((tokenChange.change / Math.pow(10, tokenChange.decimals)) * +tokenPrice)
-              }
+              poolState.push(decodedEvent.poolState)
             }
           }
-          db.collection("swap-logs").doc(txHash).set({
-            ...detailedInfo,
-            poolState,
-            tradeValue: valueInUSD
-          }, { merge: true })
+          // console.log('poolState', poolState)
+          if (poolState.length !== 0) {
+            db.collection("swap-logs").doc(txHash).set({
+              blockTime: detailedInfo.blockTime,
+              logMessage: detailedInfo.logMessage,
+              txHash: detailedInfo.txHash,
+              status: detailedInfo.status,
+              signer: detailedInfo.signer,
+              tokenBalanes: detailedInfo.tokenBalanes,
+              poolState,
+            }, { merge: true })
+          }
         } catch (err) {
+          functions.logger.error("❌", txHash)
+          db.collection("indexer-fails").doc(txHash).set({
+            error: err.message
+          }, { merge: true })
           continue
         }
       }
-      console.log("💾")
+      functions.logger.log("db write done 💾")
     } catch (err) {
-      console.log("Error : ❌", err)
+      functions.logger.error("Error : ❌", err)
     }
     return
   })
@@ -269,7 +271,7 @@ exports.statsCache = functions
   })
   .region('asia-south1')
   .pubsub
-  .schedule("*/30 * * * *")
+  .schedule("*/10 * * * *")
   .onRun(async () => {
     let last24hrVolume = 0
     let TVL = 0
@@ -344,7 +346,7 @@ exports.statsCache = functions
           }
           coingekoEndpointArray.push(tokenMeta.coingeckoId)
         } catch (err) {
-          console.log(err)
+          functions.logger.error(err)
         }
       }
 
@@ -376,27 +378,36 @@ exports.statsCache = functions
         if (typeof txData.poolState === "string") {
           poolAddresses = [txData.poolState]
         }
+        const firstToken = txData.tokenBalanes[0]
+        const balanceChange = firstToken?.amount?.preAmount - firstToken?.amount?.postAmount
+        const tradeValue = Math.abs(
+          (balanceChange / Math.pow(10, firstToken?.token?.decimals ?? 0))
+          * +coingeckoData[tokenDetails?.[firstToken?.token?.tokenAddress]?.coingeckoId]?.usd ?? 0
+        ) || 0
         for (const poolAddress of poolAddresses) {
           const poolInfo: any = poolDetails[poolAddress]
           if (poolInfo) {
             const token0 = poolInfo.token0.toString()
             const token1 = poolInfo.token1.toString()
             volumePerToken[token0] = volumePerToken[token0] ?
-              volumePerToken[token0] + txData.tradeValue : txData.tradeValue
+              volumePerToken[token0] + tradeValue : tradeValue
 
             volumePerToken[token1] = volumePerToken[token1] ?
-              volumePerToken[token1] + txData.tradeValue : txData.tradeValue
+              volumePerToken[token1] + tradeValue : tradeValue
           }
-          volumePerPool[poolAddress] = volumePerPool[poolAddress] ? volumePerPool[poolAddress] + txData.tradeValue : txData.tradeValue
-          last24hrVolume += txData.tradeValue
+          volumePerPool[poolAddress] = volumePerPool[poolAddress] ? volumePerPool[poolAddress] + tradeValue : tradeValue
+          last24hrVolume += tradeValue 
         }
+        db.collection("swap-logs").doc(txData.txHash).set({
+          tradeValue
+        }, { merge: true })
       })
       db.collection("stats-cache").doc("latest").set({
         last24hrVolume, volumePerPool, volumePerToken, poolDetails, tokenDetails, TVL
       }, { merge: true })
-      console.log("DONE ✅")
+      functions.logger.log("DONE ✅")
     } catch (err) {
-      console.log("Error : ❌", err)
+      functions.logger.error("Error : ❌", err)
     }
   })
 
@@ -418,14 +429,14 @@ exports.cumulativeVolume = functions
         .where("blockTime", ">", CVlastUpdated)
         .get()
       data.forEach(doc => {
-        allTimeVolume += doc.data().tradeValue
+        allTimeVolume += doc.data().tradeValue || 0
         CVlastUpdated = (doc.data().blockTime > CVlastUpdated) ? doc.data().blockTime : CVlastUpdated
       })
       db.collection("stats-cache").doc("latest").set({
         allTimeVolume, CVlastUpdated
       }, { merge: true })
     } catch (err) {
-      console.log(err)
+      functions.logger.error(err)
     }
   })
 
@@ -443,7 +454,7 @@ exports.stats = functions
         const data = docs.data()
         res.status(200).send(data)
       } catch (err) {
-        console.log("Error : ❌", err)
+        functions.logger.error("Error : ❌", err)
         res.status(200).send("Something went wrong")
       }
       return
