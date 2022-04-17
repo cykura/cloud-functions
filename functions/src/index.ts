@@ -378,12 +378,21 @@ exports.statsCache = functions
         if (typeof txData.poolState === "string") {
           poolAddresses = [txData.poolState]
         }
-        const firstToken = txData.tokenBalanes[0]
-        const balanceChange = firstToken?.amount?.preAmount - firstToken?.amount?.postAmount
-        const tradeValue = Math.abs(
-          (balanceChange / Math.pow(10, firstToken?.token?.decimals ?? 0))
-          * +coingeckoData[tokenDetails?.[firstToken?.token?.tokenAddress]?.coingeckoId]?.usd ?? 0
-        ) || 0
+        let tradeValue = 0
+        for (const tkn of txData.tokenBalanes) {
+          if (!tokenDetails[tkn?.token?.tokenAddress]?.priceinUSD) { continue }
+          const balanceChange = tkn?.amount?.preAmount - tkn?.amount?.postAmount
+          const balanceInUSD = Math.abs(
+            (balanceChange / Math.pow(10, tkn?.token?.decimals ?? 0))
+            * +tokenDetails[tkn?.token?.tokenAddress]?.priceinUSD
+          ) || 0
+          // dont consider any dust value 
+          if (balanceInUSD >= 0.1) {
+            tradeValue = balanceInUSD
+            break
+          }
+        }
+
         for (const poolAddress of poolAddresses) {
           const poolInfo: any = poolDetails[poolAddress]
           if (poolInfo) {
@@ -396,7 +405,7 @@ exports.statsCache = functions
               volumePerToken[token1] + tradeValue : tradeValue
           }
           volumePerPool[poolAddress] = volumePerPool[poolAddress] ? volumePerPool[poolAddress] + tradeValue : tradeValue
-          last24hrVolume += tradeValue 
+          last24hrVolume += tradeValue
         }
         db.collection("swap-logs").doc(txData.txHash).set({
           tradeValue
