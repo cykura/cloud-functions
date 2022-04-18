@@ -202,8 +202,9 @@ exports.logTxs = functions
   .schedule("*/1 * * * *")
   .onRun(async () => {
     try {
-      const lastHrTx = await getBeforeNtimeTxs(60_000 * 2)
-      functions.logger.log("last 2 mins txns fetched ✅ :", lastHrTx.length)
+      let latestTxn = (await db.collection("stats-cache").doc("latest").get()).data().latestTxn || ""
+      const lastHrTx = await getBeforeNtimeTxs(latestTxn)
+      functions.logger.log("no. of txns till ", latestTxn, " : ", lastHrTx.length)
       for (const txHash of lastHrTx) {
         // console.log(txHash)
         let docSnap = await db.collection("swap-logs").doc(txHash).get()
@@ -221,19 +222,17 @@ exports.logTxs = functions
             if (log.slice(0, 12) === "Program log:") {
               decodedMessage = cyclosCore.coder.events.decode(log.slice(13))
             }
-            if (decodedMessage !== null) {
+            if (decodedMessage !== null && decodedMessage?.name === "SwapEvent") {
               decodedEvents.push({
                 name: decodedMessage?.name,
-                poolState: decodedMessage.data.poolState.toString()
+                poolState: decodedMessage?.data.poolState.toString()
               })
             }
           })
           // console.log('decodedEvents', decodedEvents)
           const poolState = []
           for (const decodedEvent of decodedEvents) {
-            if (decodedEvent?.name === "SwapEvent") {
-              poolState.push(decodedEvent.poolState)
-            }
+            poolState.push(decodedEvent.poolState)
           }
           // console.log('poolState', poolState)
           if (poolState.length !== 0) {
@@ -255,6 +254,9 @@ exports.logTxs = functions
           continue
         }
       }
+      db.collection("stats-cache").doc("latest").set({
+        latestTxn: lastHrTx[0],
+      }, { merge: true })
       functions.logger.log("db write done 💾")
     } catch (err) {
       functions.logger.error("Error : ❌", err)
@@ -446,6 +448,78 @@ exports.cumulativeVolume = functions
       }, { merge: true })
     } catch (err) {
       functions.logger.error(err)
+    }
+  })
+
+exports.indexerFailsReRuns = functions
+  .runWith({
+    // Ensure the function has enough memory and time
+    // to process large files
+    timeoutSeconds: 500,
+    // memory: "1GB",
+  })
+  .region('asia-south1')
+  .pubsub
+  .schedule("*/30 * * * *")
+  .onRun(async () => {
+    try {
+      const failedTxns = await db.collection("indexer-fails").get()
+      failedTxns.forEach(async doc => {
+        try {
+          const txHash = doc.id
+          let docSnap = await db.collection("swap-logs").doc(txHash).get()
+          // console.log("exists: ", docSnap.exists)
+          if (docSnap.exists) {
+            db.collection("indexer-fails").doc(txHash).delete().then(() => {
+              console.log("Document successfully deleted!", txHash)
+            }).catch((error) => {
+              console.error("Error removing document: ", error)
+            })
+            return
+          }
+          let decodedEvents: any = []
+          const detailedInfo = await (await axios.get(`https://public-api.solscan.io/transaction/${txHash}`)).data
+          // console.log('detailedInfo', new Date(detailedInfo.blockTime * 1000))
+          detailedInfo?.logMessage?.forEach((log: any) => {
+            let decodedMessage = null
+            if (log.slice(0, 13) === "Program data:") {
+              decodedMessage = cyclosCore.coder.events.decode(log.slice(14))
+            }
+            if (log.slice(0, 12) === "Program log:") {
+              decodedMessage = cyclosCore.coder.events.decode(log.slice(13))
+            }
+            if (decodedMessage !== null && decodedMessage?.name === "SwapEvent") {
+              decodedEvents.push({
+                name: decodedMessage?.name,
+                poolState: decodedMessage?.data.poolState.toString()
+              })
+            }
+          })
+          // console.log('decodedEvents', decodedEvents)
+          const poolState = []
+          for (const decodedEvent of decodedEvents) {
+            if (decodedEvent?.name === "SwapEvent") {
+              poolState.push(decodedEvent.poolState)
+            }
+          }
+          // console.log('poolState', poolState)
+          if (poolState.length !== 0) {
+            db.collection("swap-logs").doc(txHash).set({
+              blockTime: detailedInfo.blockTime,
+              logMessage: detailedInfo.logMessage,
+              txHash: detailedInfo.txHash,
+              status: detailedInfo.status,
+              signer: detailedInfo.signer,
+              tokenBalanes: detailedInfo.tokenBalanes,
+              poolState,
+            }, { merge: true })
+          }
+        } catch (err) {
+          console.log(err.message, err.response?.data)
+        }
+      })
+    } catch (err) {
+      functions.logger.error(err.message)
     }
   })
 

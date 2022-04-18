@@ -7,30 +7,20 @@ export const getFirstNtxs = async (limit: number, beforeHash: string) => {
   return txList
 }
 
-export const getBeforeNtimeTxs = async (milliseconds: number) => {
-  let beforeHash = ""
-  let nxtPage = true
-  const currentTime = new Date().getTime()
-  let lastDayHashList: any = []
-  const LIMIT = 20
-  let txList = await getFirstNtxs(LIMIT, "")
-  while (nxtPage) {
-    if (beforeHash) {
-      txList = await getFirstNtxs(LIMIT, beforeHash)
-    }
-    beforeHash = ''
-    for (const [idx, txObj] of txList.entries()) {
-      if (txObj.status !== "Success") { continue }
-      const blockTime = txObj.blockTime * 1000
-      if (idx === LIMIT - 1) {
-        beforeHash = txObj.txHash
-      }
-      if ((currentTime - blockTime) <= milliseconds) {
-        lastDayHashList.push(txObj.txHash)
-      } else {
-        nxtPage = false
-      }
-    }
+export const getTxnsBatch = async (beforeHash: string) => {
+  let txList = await getFirstNtxs(10, beforeHash)
+  return txList.filter((t: any) => t.status === "Success").map((t: any) => t.txHash)
+}
+
+export const getBeforeNtimeTxs = async (lastHash: string) => {
+  let txList = await getTxnsBatch("")
+  let maxBatch = 20
+  while (maxBatch--)
+  if (txList.includes(lastHash)) {
+    return txList
+  } else {
+    let secondBatch = await getTxnsBatch(txList[txList.length - 1])
+    txList = [...txList, ...secondBatch]
   }
-  return lastDayHashList
+  return txList
 }
