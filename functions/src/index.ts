@@ -236,7 +236,7 @@ exports.logTxs = functions
           }
           // console.log('poolState', poolState)
           if (poolState.length !== 0) {
-            db.collection("swap-logs").doc(txHash).set({
+            await db.collection("swap-logs").doc(txHash).set({
               blockTime: detailedInfo.blockTime,
               logMessage: detailedInfo.logMessage,
               txHash: detailedInfo.txHash,
@@ -248,14 +248,14 @@ exports.logTxs = functions
           }
         } catch (err) {
           functions.logger.error("❌", txHash)
-          db.collection("indexer-fails").doc(txHash).set({
+          await db.collection("indexer-fails").doc(txHash).set({
             error: err.message
           }, { merge: true })
           continue
         }
       }
-      db.collection("stats-cache").doc("latest").set({
-        latestTxn: lastHrTx[0],
+      await db.collection("stats-cache").doc("latest").set({
+        latestTxn: lastHrTx[0] ?? latestTxn,
       }, { merge: true })
       functions.logger.log("db write done 💾")
     } catch (err) {
@@ -269,7 +269,7 @@ exports.statsCache = functions
     // Ensure the function has enough memory and time
     // to process large files
     timeoutSeconds: 540,
-    // memory: "8GB",
+    memory: "8GB",
   })
   .region('asia-south1')
   .pubsub
@@ -283,6 +283,7 @@ exports.statsCache = functions
     try {
       const last24hrsTxns = await analyticsRef
         .where("blockTime", ">", (new Date().getTime() - 86400_000) / 1000)
+        // .where("blockTime", "<=", (new Date().getTime() - 86400_000 / 2) / 1000)
         .get()
 
       const poolStates: any = await cyclosCore.account.poolState.all()
@@ -374,7 +375,7 @@ exports.statsCache = functions
         }
       }
 
-      last24hrsTxns.forEach(doc => {
+      last24hrsTxns.forEach(async doc => {
         const txData = doc.data()
         let poolAddresses = txData.poolState
         if (typeof txData.poolState === "string") {
@@ -409,11 +410,11 @@ exports.statsCache = functions
           volumePerPool[poolAddress] = volumePerPool[poolAddress] ? volumePerPool[poolAddress] + tradeValue : tradeValue
           last24hrVolume += tradeValue
         }
-        db.collection("swap-logs").doc(txData.txHash).set({
+        await db.collection("swap-logs").doc(txData.txHash).set({
           tradeValue
         }, { merge: true })
       })
-      db.collection("stats-cache").doc("latest").set({
+      await db.collection("stats-cache").doc("latest").set({
         last24hrVolume, volumePerPool, volumePerToken, poolDetails, tokenDetails, TVL
       }, { merge: true })
       functions.logger.log("DONE ✅")
@@ -443,7 +444,7 @@ exports.cumulativeVolume = functions
         allTimeVolume += doc.data().tradeValue || 0
         CVlastUpdated = (doc.data().blockTime > CVlastUpdated) ? doc.data().blockTime : CVlastUpdated
       })
-      db.collection("stats-cache").doc("latest").set({
+      await db.collection("stats-cache").doc("latest").set({
         allTimeVolume, CVlastUpdated
       }, { merge: true })
     } catch (err) {
@@ -464,7 +465,7 @@ exports.indexerFailsReRuns = functions
   .onRun(async () => {
     try {
       const failedTxns = await db.collection("indexer-fails").get()
-      failedTxns.forEach(async doc => {
+      for (const doc of failedTxns.docs) {
         try {
           const txHash = doc.id
           let docSnap = await db.collection("swap-logs").doc(txHash).get()
@@ -475,7 +476,7 @@ exports.indexerFailsReRuns = functions
             }).catch((error) => {
               console.error("Error removing document: ", error)
             })
-            return
+            continue;
           }
           let decodedEvents: any = []
           const detailedInfo = await (await axios.get(`https://public-api.solscan.io/transaction/${txHash}`)).data
@@ -504,7 +505,7 @@ exports.indexerFailsReRuns = functions
           }
           // console.log('poolState', poolState)
           if (poolState.length !== 0) {
-            db.collection("swap-logs").doc(txHash).set({
+            await db.collection("swap-logs").doc(txHash).set({
               blockTime: detailedInfo.blockTime,
               logMessage: detailedInfo.logMessage,
               txHash: detailedInfo.txHash,
@@ -517,7 +518,7 @@ exports.indexerFailsReRuns = functions
         } catch (err) {
           console.log(err.message, err.response?.data)
         }
-      })
+      }
     } catch (err) {
       functions.logger.error(err.message)
     }
