@@ -8,7 +8,7 @@ export const getFirstNtxs = async (limit: number, beforeHash: string) => {
 }
 
 export const getTxnsBatch = async (beforeHash: string) => {
-  let txList = await getFirstNtxs(10, beforeHash)
+  let txList = await getFirstNtxs(50, beforeHash)
   return txList.filter((t: any) => t.status === "Success").map((t: any) => t.txHash)
 }
 

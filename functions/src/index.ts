@@ -410,9 +410,11 @@ exports.statsCache = functions
           volumePerPool[poolAddress] = volumePerPool[poolAddress] ? volumePerPool[poolAddress] + tradeValue : tradeValue
           last24hrVolume += tradeValue
         }
-        await db.collection("swap-logs").doc(txData.txHash).set({
-          tradeValue
-        }, { merge: true })
+        if (tradeValue > (txData?.tradeValue || 0)) {
+          await db.collection("swap-logs").doc(txData.txHash).set({
+            tradeValue
+          }, { merge: true })
+        }
       })
       await db.collection("stats-cache").doc("latest").set({
         last24hrVolume, volumePerPool, volumePerToken, poolDetails, tokenDetails, TVL
@@ -456,12 +458,12 @@ exports.indexerFailsReRuns = functions
   .runWith({
     // Ensure the function has enough memory and time
     // to process large files
-    timeoutSeconds: 500,
+    timeoutSeconds: 540,
     // memory: "1GB",
   })
   .region('asia-south1')
   .pubsub
-  .schedule("*/30 * * * *")
+  .schedule("*/10 * * * *")
   .onRun(async () => {
     try {
       const failedTxns = await db.collection("indexer-fails").get()
@@ -515,6 +517,7 @@ exports.indexerFailsReRuns = functions
               poolState,
             }, { merge: true })
           }
+          // console.log(txHash)
         } catch (err) {
           console.log(err.message, err.response?.data)
         }
