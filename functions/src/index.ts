@@ -547,3 +547,36 @@ exports.stats = functions
       return
     })
   })
+
+exports.pools = functions
+  .region('asia-south1')
+  .https.onRequest((req, res) => {
+    if (req.method !== 'GET') {
+      res.status(403).send('Forbidden!')
+      return
+    }
+    cors(req, res, async () => {
+      try {
+        const blacklistedPools = ["85SZLB3yBzBo49AhAHzFjFikH2QN8KuUSD6bjH4X6EDb"]
+        const poolStates: any = await cyclosCore.account.poolState.all()
+        const data = poolStates.reduce((result: any, pool: any) => {
+          if (!blacklistedPools.includes(pool.publicKey.toString())) {
+            result.push(
+              {
+                poolAddress: pool.publicKey.toString(),
+                fee: pool.account.fee,
+                token0: pool.account.token0.toString(),
+                token1: pool.account.token1.toString()
+              }
+            )
+          }
+          return result
+        }, [])
+        res.status(200).send(data)
+      } catch (err) {
+        functions.logger.error("Error : ❌", err)
+        res.status(200).send("Something went wrong")
+      }
+      return
+    })
+  })
