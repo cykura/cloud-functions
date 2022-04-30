@@ -1,6 +1,10 @@
+import { web3 } from '@project-serum/anchor'
+import { PublicKey } from "@solana/web3.js"
 import axios from "axios"
 
 export const PROGRAMADDRESS = "cysPXAjehMpVKUapzbMCCnpFxUFFryEWEaLgnb9NrR8"
+
+const connection = new web3.Connection('https://ssc-dao.genesysgo.net')
 
 export const getFirstNtxs = async (limit: number, beforeHash: string) => {
   const txList = await (await axios.get(`https://public-api.solscan.io/account/transactions?account=${PROGRAMADDRESS}&beforeHash=${beforeHash ?? ""}&limit=${limit}`)).data
@@ -25,4 +29,17 @@ export const getBeforeNtimeTxs = async (lastHash: string) => {
       }
     }
   return txList
+}
+
+export const getRecentTxns = async (until?: string) => {
+  const allTxns = await connection.getConfirmedSignaturesForAddress2(new PublicKey(PROGRAMADDRESS), {
+    until: until
+  })
+  const successTxns = allTxns.filter((tx: any) => tx.err === null)
+  return successTxns;
+}
+
+export const getTxInfo = async (txHash: string) => {
+  const tx = await connection.getTransaction(txHash)
+  return tx
 }
