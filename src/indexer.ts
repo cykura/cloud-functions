@@ -21,6 +21,7 @@ const connection = new web3.Connection('https://ssc-dao.genesysgo.net')
 const provider = new anchor.Provider(connection, wallet, {})
 const cyclosCore = new anchor.Program(idl as anchor.Idl, PROGRAM_ID, provider)
 
+
 const cronFn = async () => {
   try {
     // read latest logged txn
@@ -31,7 +32,7 @@ const cronFn = async () => {
       try {
         let decodedEvents: any = []
         const txInfo = await getTxInfo(txHash);
-        if (!txInfo) { return }
+        if (!txInfo) { throw new Error("txInfo is null") }
         txInfo?.meta?.logMessages?.forEach((log: any) => {
           let decodedMessage = null
           if (log.slice(0, 13) === "Program data:") {
@@ -45,53 +46,75 @@ const cronFn = async () => {
           }
         })
         for (const decodedMessage of decodedEvents) {
+          const pool_addr = decodedMessage?.data?.poolState?.toString()
           const amount0 = decodedMessage?.data?.amount0?.toString()
           const amount1 = decodedMessage?.data?.amount1?.toString()
           const tokenAccount0 = decodedMessage?.data?.tokenAccount0?.toString()
           const tokenAccount1 = decodedMessage?.data?.tokenAccount1?.toString()
-          const tk0Info: any = (await connection.getParsedAccountInfo(new PublicKey(tokenAccount0))).value?.data
-          const tk1Info: any = (await connection.getParsedAccountInfo(new PublicKey(tokenAccount1))).value?.data
-          const tk0 = tk0Info?.parsed.info.mint;
-          const tk1 = tk1Info?.parsed.info.mint;
-          const tk0Decimals = +tk0Info?.parsed.info.tokenAmount?.decimals;
-          const tk1Decimals = +tk1Info?.parsed.info.tokenAmount?.decimals;
-          let volume = 0
-          let tk0Price = 0
-          let tk1Price = 0
-          try {
-            tk0Price = await (await axios.get(`https://public-api.solscan.io/market/token/${tk0}`)).data?.priceUsdt
-            tk1Price = await (await axios.get(`https://public-api.solscan.io/market/token/${tk1}`)).data?.priceUsdt
-          } catch (err) {
-            console.log(err);
-          }
-          if (tk0Info && tk0Price) {
-            volume = Math.abs((amount0 / Math.pow(10, tk0Decimals))) * tk0Price
-          } else {
-            volume = Math.abs((amount1 / Math.pow(10, tk1Decimals))) * tk1Price ?? 0
-          }
+
+          const poolState: any = await cyclosCore.account.poolState.fetch(new PublicKey(pool_addr))
+          const tk0 = poolState?.token0.toString() ?? null;
+          const tk1 = poolState?.token1.toString() ?? null;
+
+          // const tk0Info: any = (await connection.getParsedAccountInfo(new PublicKey(tokenAccount0))).value?.data
+          // const tk1Info: any = (await connection.getParsedAccountInfo(new PublicKey(tokenAccount1))).value?.data
+          // const tk0Decimals = +tk0Info?.parsed.info.tokenAmount?.decimals ?? 0;
+          // const tk1Decimals = +tk1Info?.parsed.info.tokenAmount?.decimals ?? 0;
+          // let volume = 0
+          // let tk0Price = 0
+          // let tk1Price = 0
+          // try {
+          //   tk0Price = await (await axios.get(`https://public-api.solscan.io/market/token/${tk0}`)).data?.priceUsdt
+          //   tk1Price = await (await axios.get(`https://public-api.solscan.io/market/token/${tk1}`)).data?.priceUsdt
+          // } catch (err: any) {
+          //   console.log(err?.message);
+          // }
+          // if (tk0Info && tk0Price) {
+          //   volume = Math.abs((amount0 / Math.pow(10, tk0Decimals))) * tk0Price
+          // } else {
+          //   volume = Math.abs((amount1 / Math.pow(10, tk1Decimals))) * tk1Price ?? 0
+          // }
 
           const poolData = {
             amount0,
             amount1,
-            liquidity: decodedMessage?.data?.liquidity?.toString(),
-            pool_addr: decodedMessage?.data?.poolState?.toString(),
+            pool_addr,
             sender: decodedMessage?.data?.sender?.toString(),
-            sqrt_price_x32: decodedMessage?.data?.sqrtPriceX32?.toString(),
-            tick: decodedMessage?.data?.tick,
             tokenAccount0,
             tokenAccount1,
             token0: tk0,
             token1: tk1,
             txn_block_time: txInfo.blockTime,
-            txn_block_time_local: new Date(txInfo?.blockTime || 0 * 1000)?.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }),
+            txn_block_time_local: txInfo.blockTime ? new Date(txInfo.blockTime * 1000).toLocaleString("en-US", { timeZone: "Asia/Kolkata" }) : null,
             tx_hash: txHash,
             tx_slot: txInfo.slot,
-            volume: volume
+            volume: 0
           }
-          console.log(poolData);
+          const resp = await axios.post(
+            'https://cykura-analytics.hasura.app/v1/graphql',
+            {
+              query: getAddTxnQuery(poolData)
+            }, {
+            headers: {
+              "Content-Type": "application/json",
+              "x-hasura-admin-secret": "iQDakTzEDOal3519hRYZe0QXg4VWxr02ro0wjqx6qsIo068oVlyM7DWynXbR30Yr"
+            },
+          })
+          console.log(resp?.status, resp?.statusText, resp?.data);
         }
       } catch (err: any) {
         console.error(err?.message);
+        const resp = await axios.post(
+          'https://cykura-analytics.hasura.app/v1/graphql',
+          {
+            query: getAddFailedTxnQuery(txHash, err?.message)
+          }, {
+          headers: {
+            "Content-Type": "application/json",
+            "x-hasura-admin-secret": "iQDakTzEDOal3519hRYZe0QXg4VWxr02ro0wjqx6qsIo068oVlyM7DWynXbR30Yr"
+          },
+        })
+        console.log(resp?.status, resp?.statusText, resp?.data);
         continue
       }
     }
@@ -102,3 +125,41 @@ const cronFn = async () => {
 }
 
 cronFn()
+const getAddTxnQuery = (poolData: any) => {
+  return `
+    mutation MyMutation {
+      insert_indexer_one(object: {
+        amount0: "${poolData.amount0}", 
+        amount1: "${poolData.amount1}",
+        pool_addr: "${poolData.pool_addr}",
+        sender: "${poolData.sender}",
+        token0: "${poolData.token0}",
+        token1: "${poolData.token1}",, 
+        tokenAccount0: "${poolData.tokenAccount0}",
+        tokenAccount1: "${poolData.tokenAccount1}", 
+        tx_hash: "${poolData.tx_hash}", 
+        tx_slot: "${poolData.tx_slot}",
+        txn_block_time: "${poolData.txn_block_time}",
+        txn_block_time_local: "${poolData.txn_block_time_local}",
+        volume: "${poolData.volume}"
+      }) {
+        tx_hash
+        txn_block_time_local
+        volume
+      }
+    }
+  `
+}
+
+const getAddFailedTxnQuery = (txHash: any, err: any) => {
+  return `
+    mutation MyMutation {
+      insert_failedTxns_one(object: {
+        tx_hash: "${txHash}", 
+        err: "${err}"
+      }) {
+        tx_hash
+      }
+    }
+  `
+}
