@@ -29,7 +29,7 @@ const keypair = Keypair.fromSecretKey(
 )
 
 const wallet = new anchor.Wallet(keypair)
-const connection = new web3.Connection('https://ssc-dao.genesysgo.net')
+const connection = new web3.Connection('https://solana-api.projectserum.com')
 const provider = new anchor.Provider(connection, wallet, {})
 const cyclosCore = new anchor.Program(idl as anchor.Idl, PROGRAM_ID, provider)
 
@@ -389,7 +389,7 @@ exports.statsCache = functions
             (balanceChange / Math.pow(10, tkn?.token?.decimals ?? 0))
             * +tokenDetails[tkn?.token?.tokenAddress]?.priceinUSD
           ) || 0
-          // dont consider any dust value 
+          // dont consider any dust value
           if (balanceInUSD >= 0.1) {
             tradeValue = balanceInUSD
             break
